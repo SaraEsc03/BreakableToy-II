@@ -14,6 +14,7 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Map;
+import java.util.LinkedHashMap;
 import java.util.stream.Collectors;
 
 
@@ -67,17 +68,35 @@ public class AmadeusApiClientService {
 
 //TO SEARCH FLIGHTS METHOD REQUIRED
     public String searchFlights(String origin, String destination, String departureDate, int adults) {
+        // keep existing method for backward compatibility
+        return searchFlights(new com.example.flightsapp.dtos.input.FlightSearchDTO(origin, destination, departureDate, null, null, null, adults));
+    }
+
+    public String searchFlights(com.example.flightsapp.dtos.input.FlightSearchDTO req) {
 
         try {
             String token = getValidAccessToken();
 
-            Map<String, String> params = Map.of(
-                    "originLocationCode", origin,
-                    "destinationLocationCode", destination,
-                    "departureDate", departureDate,
-                    "adults", String.valueOf(adults),
-                    "max", "5"
-            );
+            // LinkedHashMap to preserve insertion order (not strictly required)
+            Map<String, String> params = new LinkedHashMap<>();
+            params.put("originLocationCode", req.getOrigin());
+            params.put("destinationLocationCode", req.getDestination());
+            params.put("departureDate", req.getDepartureDate());
+
+            if (req.getReturnDate() != null && !req.getReturnDate().isBlank()) {
+                params.put("returnDate", req.getReturnDate());
+            }
+
+            if (req.getCurrency() != null && !req.getCurrency().isBlank()) {
+                params.put("currency", req.getCurrency());
+            }
+
+            if (req.getNonStop() != null) {
+                params.put("nonStop", String.valueOf(req.getNonStop()));
+            }
+
+            params.put("adults", String.valueOf(req.getAdults() == null ? 1 : req.getAdults()));
+            params.put("max", "5");
 
             String queryString = params.entrySet().stream()
                     .map(entry -> URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8) + "=" +

@@ -1,5 +1,8 @@
 package com.example.flightsapp;
+
 import org.springframework.web.bind.annotation.*;
+
+import com.example.flightsapp.dtos.input.FlightSearchDTO;
 
 /**
  * FlightSearchController handles flight search requests using Amadeus API based on user input.
@@ -23,12 +26,8 @@ public class FlightSearchController {
      * @return A JSON string response containing flight search results.
      */
     @GetMapping("/search")
-    public String searchFlights(
-            @RequestParam String origin,
-            @RequestParam String destination,
-            @RequestParam String departureDate,
-            @RequestParam(defaultValue = "1") int adults) {
-
-        return amadeusApiClientService.searchFlights(origin, destination, departureDate, adults);
+    public String searchFlights(@ModelAttribute FlightSearchDTO request) {
+        // The request object will bind query parameters. Optional fields may be null.
+        return amadeusApiClientService.searchFlights(request);
     }
 }
