@@ -1,5 +1,4 @@
-package com.flightsapp.client;
-
+package com.example.flightsapp;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -8,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "amadeus.api")
 @Getter
 @Setter
-public class AmadeusClient {
+public class AmadeusApiProperties {
    private String clientId;
    private String clientSecret;
    private String tokenUrl;
