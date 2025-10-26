@@ -1,7 +1,8 @@
 package com.example.flightsapp;
 
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.validation.annotation.Validated;
 import com.example.flightsapp.dtos.input.FlightSearchDTO;
 
 /**
@@ -9,6 +10,7 @@ import com.example.flightsapp.dtos.input.FlightSearchDTO;
  */
 @RestController
 @RequestMapping("/api/v1/flights")
+@Validated
 public class FlightSearchController {
 
     private final AmadeusApiClientService amadeusApiClientService;
@@ -26,7 +28,7 @@ public class FlightSearchController {
      * @return A JSON string response containing flight search results.
      */
     @GetMapping("/search")
-    public String searchFlights(@ModelAttribute FlightSearchDTO request) {
+    public String searchFlights(@Valid @ModelAttribute FlightSearchDTO request) {
         // The request object will bind query parameters. Optional fields may be null.
         return amadeusApiClientService.searchFlights(request);
     }

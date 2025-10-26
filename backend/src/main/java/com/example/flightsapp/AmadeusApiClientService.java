@@ -1,7 +1,9 @@
 package com.example.flightsapp;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -17,24 +19,23 @@ import java.util.Map;
 import java.util.LinkedHashMap;
 import java.util.stream.Collectors;
 
-
-//Initialize HttpClient from java.net.http to make HTTP-based API calls
 @Service
 @Slf4j
 public class AmadeusApiClientService {
+
     private final HttpClient httpClient;
     private final AmadeusApiProperties properties;
 
     private String accessToken;
     private Instant tokenExpiry;
 
+    // Spring inyecta automáticamente el bean
     public AmadeusApiClientService(AmadeusApiProperties properties) {
         this.httpClient = HttpClient.newHttpClient();
         this.properties = properties;
     }
 
 
-//Before calling any protected endpoints, AmadeusApiClientService needs to obtain an OAuth access token, which is handled in the authenticate() method
     private void authenticate() throws IOException, InterruptedException {
         String form = "grant_type=client_credentials"
                 + "&client_id=" + URLEncoder.encode(properties.getClientId(), StandardCharsets.UTF_8)
@@ -54,8 +55,8 @@ public class AmadeusApiClientService {
 
         JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
         this.accessToken = json.get("access_token").getAsString();
-        int expiresIn = json.get("expires_in").getAsInt(); // in seconds
-        this.tokenExpiry = Instant.now().plusSeconds(expiresIn - 60); // refresh 1 min early
+        int expiresIn = json.get("expires_in").getAsInt();
+        this.tokenExpiry = Instant.now().plusSeconds(expiresIn - 60);
     }
 
     private String getValidAccessToken() throws IOException, InterruptedException {
@@ -65,19 +66,15 @@ public class AmadeusApiClientService {
         return accessToken;
     }
 
-
-//TO SEARCH FLIGHTS METHOD REQUIRED
+    // === Flights ===
     public String searchFlights(String origin, String destination, String departureDate, int adults) {
-        // keep existing method for backward compatibility
         return searchFlights(new com.example.flightsapp.dtos.input.FlightSearchDTO(origin, destination, departureDate, null, null, null, adults));
     }
 
     public String searchFlights(com.example.flightsapp.dtos.input.FlightSearchDTO req) {
-
         try {
             String token = getValidAccessToken();
 
-            // LinkedHashMap to preserve insertion order (not strictly required)
             Map<String, String> params = new LinkedHashMap<>();
             params.put("originLocationCode", req.getOrigin());
             params.put("destinationLocationCode", req.getDestination());
@@ -86,21 +83,18 @@ public class AmadeusApiClientService {
             if (req.getReturnDate() != null && !req.getReturnDate().isBlank()) {
                 params.put("returnDate", req.getReturnDate());
             }
-
             if (req.getCurrency() != null && !req.getCurrency().isBlank()) {
                 params.put("currency", req.getCurrency());
             }
-
             if (req.getNonStop() != null) {
                 params.put("nonStop", String.valueOf(req.getNonStop()));
             }
-
             params.put("adults", String.valueOf(req.getAdults() == null ? 1 : req.getAdults()));
             params.put("max", "5");
 
             String queryString = params.entrySet().stream()
                     .map(entry -> URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8) + "=" +
-                            URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8))
+                                  URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8))
                     .collect(Collectors.joining("&"));
 
             HttpRequest request = HttpRequest.newBuilder()
@@ -115,11 +109,63 @@ public class AmadeusApiClientService {
                 log.error("Failed to search flights : {}", response.body());
                 return response.body();
             }
-
             return response.body();
         } catch (IOException | InterruptedException | RuntimeException e) {
             log.error("Failed to search flights: {}", e.getMessage());
             return e.getMessage();
         }
     }
+
+    // === Airports ===
+    public String getAirports(String keyword) {
+        if (keyword == null || keyword.isBlank()) return "{}";
+        try {
+            String token = getValidAccessToken();
+            String endpoint = properties.getApiBaseUrl() + "/v1/reference-data/locations?keyword=" +
+                              URLEncoder.encode(keyword, StandardCharsets.UTF_8) + "&subType=AIRPORT";
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(endpoint))
+                    .header("Authorization", "Bearer " + token)
+                    .GET()
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() != 200) {
+                log.error("Failed to get airports: {}", response.body());
+                return response.body();
+            }
+            return response.body();
+        } catch (IOException | InterruptedException | RuntimeException e) {
+            log.error("Failed to get airports: {}", e.getMessage());
+            return e.getMessage();
+        }
+    }
+
+    // === Airlines ===
+    public String getAirlines(String codes) {
+        if (codes == null || codes.isBlank()) return "{}";
+        try {
+            String token = getValidAccessToken();
+            String endpoint = properties.getApiBaseUrl() + "/v1/reference-data/airlines?airlineCodes=" +
+                              URLEncoder.encode(codes, StandardCharsets.UTF_8);
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(endpoint))
+                    .header("Authorization", "Bearer " + token)
+                    .GET()
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() != 200) {
+                log.error("Failed to get airlines: {}", response.body());
+                return response.body();
+            }
+            return response.body();
+        } catch (IOException | InterruptedException | RuntimeException e) {
+            log.error("Failed to get airlines: {}", e.getMessage());
+            return e.getMessage();
+        }
+    }
+
 }
