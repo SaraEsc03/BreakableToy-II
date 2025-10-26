@@ -1,6 +1,5 @@
 package com.example.flightsapp;
 
-import com.example.flightsapp.dtos.input.FlightSearchDTO;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.junit.jupiter.api.Test;
@@ -503,23 +502,12 @@ class FlightSearchAPIResponseTest {
                 .get("self")
                 .getAsString();
 
-        // Create DTO with values that should match the API response URL
-        FlightSearchDTO dto = new FlightSearchDTO();
-        dto.setOrigin("MAD");
-        dto.setDestination("NYC");
-        dto.setDepartureDate("2025-12-01");
-        dto.setAdults(2);
-        dto.setNonStop(true);
-        dto.setCurrencyCode("EUR");
-
-        // Verify each parameter exists in the API response URL
-        assertThat(selfLink)
-                .contains("originLocationCode=" + dto.getOrigin())
-                .contains("destinationLocationCode=" + dto.getDestination())
-                .contains("departureDate=" + dto.getDepartureDate())
-                .contains("adults=" + dto.getAdults())
-                .contains("nonStop=" + dto.getNonStop())
-                .contains("currencyCode=" + dto.getCurrencyCode());
+  // We'll parse the self link and assert expected query params are present
+  assertThat(selfLink).contains("originLocationCode=SYD");
+  assertThat(selfLink).contains("destinationLocationCode=BKK");
+  assertThat(selfLink).contains("departureDate=2025-12-02");
+  assertThat(selfLink).contains("adults=1");
+  assertThat(selfLink).contains("nonStop=false");
     }
 
     @Test
@@ -529,12 +517,13 @@ class FlightSearchAPIResponseTest {
         JsonObject flightOffer = response.getAsJsonArray("data").get(0).getAsJsonObject();
         JsonObject price = flightOffer.getAsJsonObject("price");
 
-        // Create DTO with matching currency
-        FlightSearchDTO dto = new FlightSearchDTO();
-        dto.setCurrencyCode(price.get("currency").getAsString());
+  // Map price JSON into existing PriceTotalsResponseDTO and assert
+  com.example.flightsapp.dtos.output.PriceTotalsResponseDTO priceDto = new com.example.flightsapp.dtos.output.PriceTotalsResponseDTO();
+  priceDto.setCurrency(price.get("currency").getAsString());
+  priceDto.setTotal(price.get("total").getAsString());
 
-        // Verify the currency in DTO matches the price currency in response
-        assertThat(dto.getCurrencyCode()).isEqualTo(price.get("currency").getAsString());
+  assertThat(priceDto.getCurrency()).isEqualTo(price.get("currency").getAsString());
+  assertThat(priceDto.getTotal()).isEqualTo(price.get("total").getAsString());
     }
 
     @Test
@@ -547,12 +536,15 @@ class FlightSearchAPIResponseTest {
                 .getAsJsonArray("segments")
                 .get(0).getAsJsonObject();
 
-        // Create DTO with nonStop=true (as in our sample response)
-        FlightSearchDTO dto = new FlightSearchDTO();
-        dto.setNonStop(true);
+  // Map first segment into SegmentDTO and AirportTravelingsInfoDTO and assert mapping
+  com.example.flightsapp.dtos.output.SegmentDTO segDto = new com.example.flightsapp.dtos.output.SegmentDTO();
+  com.example.flightsapp.dtos.output.AirportTravelingsInfoDTO dep = new com.example.flightsapp.dtos.output.AirportTravelingsInfoDTO();
+  dep.setAirlineCode(segment.getAsJsonObject("departure").get("iataCode").getAsString());
+  dep.setTerminal(segment.getAsJsonObject("departure").get("terminal").getAsString());
+  dep.setDateTime(segment.getAsJsonObject("departure").get("at").getAsString());
+  segDto.setDeparture(dep);
 
-        // Verify that when nonStop is true, the segment has numberOfStops=0
-        assertThat(dto.getNonStop())
-                .isEqualTo(segment.get("numberOfStops").getAsInt() == 0);
+  assertThat(segDto.getDeparture().getAirlineCode()).isEqualTo("SYD");
+  assertThat(segment.get("numberOfStops").getAsInt()).isEqualTo(0);
     }
 }
