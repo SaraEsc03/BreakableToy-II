@@ -29,7 +29,7 @@ public class FlightSearchDTO {
     private String returnDate; // YYYY-MM-DD
 
     // optional, e.g. "USD"
-    private String currency;
+    private String currencyCode;
 
     // optional: if true, request non-stop itineraries only
     private Boolean nonStop;

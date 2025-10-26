@@ -1,8 +1,10 @@
-package com.example.flightsapp;
+package com.example.flightsapp.controllers;
 
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.validation.annotation.Validated;
+
+import com.example.flightsapp.client.AmadeusApiClientService;
 import com.example.flightsapp.dtos.input.FlightSearchDTO;
 
 /**

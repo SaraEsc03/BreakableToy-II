@@ -1,6 +1,5 @@
-package com.example.flightsapp;
+package com.example.flightsapp.client;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -29,12 +28,10 @@ public class AmadeusApiClientService {
     private String accessToken;
     private Instant tokenExpiry;
 
-    // Spring inyecta automáticamente el bean
     public AmadeusApiClientService(AmadeusApiProperties properties) {
         this.httpClient = HttpClient.newHttpClient();
         this.properties = properties;
     }
-
 
     private void authenticate() throws IOException, InterruptedException {
         String form = "grant_type=client_credentials"
@@ -67,14 +64,9 @@ public class AmadeusApiClientService {
     }
 
     // === Flights ===
-    public String searchFlights(String origin, String destination, String departureDate, int adults) {
-        return searchFlights(new com.example.flightsapp.dtos.input.FlightSearchDTO(origin, destination, departureDate, null, null, null, adults));
-    }
-
     public String searchFlights(com.example.flightsapp.dtos.input.FlightSearchDTO req) {
         try {
             String token = getValidAccessToken();
-
             Map<String, String> params = new LinkedHashMap<>();
             params.put("originLocationCode", req.getOrigin());
             params.put("destinationLocationCode", req.getDestination());
@@ -83,8 +75,8 @@ public class AmadeusApiClientService {
             if (req.getReturnDate() != null && !req.getReturnDate().isBlank()) {
                 params.put("returnDate", req.getReturnDate());
             }
-            if (req.getCurrency() != null && !req.getCurrency().isBlank()) {
-                params.put("currency", req.getCurrency());
+            if (req.getCurrencyCode() != null && !req.getCurrencyCode().isBlank()) {
+                params.put("currencyCode", req.getCurrencyCode());
             }
             if (req.getNonStop() != null) {
                 params.put("nonStop", String.valueOf(req.getNonStop()));
@@ -104,68 +96,10 @@ public class AmadeusApiClientService {
                     .build();
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() != 200) {
-                log.error("Failed to search flights : {}", response.body());
-                return response.body();
-            }
             return response.body();
-        } catch (IOException | InterruptedException | RuntimeException e) {
-            log.error("Failed to search flights: {}", e.getMessage());
-            return e.getMessage();
+        } catch (IOException | InterruptedException e) {
+            log.error("Error searching flights", e);
+            return "{}";
         }
     }
-
-    // === Airports ===
-    public String getAirports(String keyword) {
-        if (keyword == null || keyword.isBlank()) return "{}";
-        try {
-            String token = getValidAccessToken();
-            String endpoint = properties.getApiBaseUrl() + "/v1/reference-data/locations?keyword=" +
-                              URLEncoder.encode(keyword, StandardCharsets.UTF_8) + "&subType=AIRPORT";
-
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(endpoint))
-                    .header("Authorization", "Bearer " + token)
-                    .GET()
-                    .build();
-
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() != 200) {
-                log.error("Failed to get airports: {}", response.body());
-                return response.body();
-            }
-            return response.body();
-        } catch (IOException | InterruptedException | RuntimeException e) {
-            log.error("Failed to get airports: {}", e.getMessage());
-            return e.getMessage();
-        }
-    }
-
-    // === Airlines ===
-    public String getAirlines(String codes) {
-        if (codes == null || codes.isBlank()) return "{}";
-        try {
-            String token = getValidAccessToken();
-            String endpoint = properties.getApiBaseUrl() + "/v1/reference-data/airlines?airlineCodes=" +
-                              URLEncoder.encode(codes, StandardCharsets.UTF_8);
-
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(endpoint))
-                    .header("Authorization", "Bearer " + token)
-                    .GET()
-                    .build();
-
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() != 200) {
-                log.error("Failed to get airlines: {}", response.body());
-                return response.body();
-            }
-            return response.body();
-        } catch (IOException | InterruptedException | RuntimeException e) {
-            log.error("Failed to get airlines: {}", e.getMessage());
-            return e.getMessage();
-        }
-    }
-
 }

@@ -510,7 +510,7 @@ class FlightSearchAPIResponseTest {
         dto.setDepartureDate("2025-12-01");
         dto.setAdults(2);
         dto.setNonStop(true);
-        dto.setCurrency("EUR");
+        dto.setCurrencyCode("EUR");
 
         // Verify each parameter exists in the API response URL
         assertThat(selfLink)
@@ -519,7 +519,7 @@ class FlightSearchAPIResponseTest {
                 .contains("departureDate=" + dto.getDepartureDate())
                 .contains("adults=" + dto.getAdults())
                 .contains("nonStop=" + dto.getNonStop())
-                .contains("currencyCode=" + dto.getCurrency());
+                .contains("currencyCode=" + dto.getCurrencyCode());
     }
 
     @Test
@@ -531,10 +531,10 @@ class FlightSearchAPIResponseTest {
 
         // Create DTO with matching currency
         FlightSearchDTO dto = new FlightSearchDTO();
-        dto.setCurrency(price.get("currency").getAsString());
+        dto.setCurrencyCode(price.get("currency").getAsString());
 
         // Verify the currency in DTO matches the price currency in response
-        assertThat(dto.getCurrency()).isEqualTo(price.get("currency").getAsString());
+        assertThat(dto.getCurrencyCode()).isEqualTo(price.get("currency").getAsString());
     }
 
     @Test

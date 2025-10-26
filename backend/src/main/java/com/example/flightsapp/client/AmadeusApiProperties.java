@@ -1,4 +1,4 @@
-package com.example.flightsapp;
+package com.example.flightsapp.client;
 
 import lombok.Getter;
 import lombok.Setter;
