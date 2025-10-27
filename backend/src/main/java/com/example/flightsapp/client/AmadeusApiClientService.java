@@ -86,7 +86,7 @@ public class AmadeusApiClientService {
 
             String queryString = params.entrySet().stream()
                     .map(entry -> URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8) + "=" +
-                                  URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8))
+                            URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8))
                     .collect(Collectors.joining("&"));
 
             HttpRequest request = HttpRequest.newBuilder()
@@ -102,4 +102,42 @@ public class AmadeusApiClientService {
             return "{}";
         }
     }
+
+    // === Airports ===
+    public String searchAirports(String keyword, int pageoffset) {
+        try {
+            String token = getValidAccessToken();
+
+            // Query params
+            String subType = "AIRPORT,CITY";
+            String sort= "analytics.travelers.score";
+            String view= "LIGHT";
+            
+            Map<String, String> params = new LinkedHashMap<>();
+            params.put("keyword", keyword != null && !keyword.isBlank() ? keyword : "a"); // Amadeus API requires at least one character
+            params.put("subType", subType);
+            params.put("page[offset]", String.valueOf(pageoffset));
+            params.put("sort",sort);
+            params.put("view",view);
+
+            String queryString = params.entrySet().stream()
+                    .map(entry -> URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8) + "=" +
+                            URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8))
+                    .collect(Collectors.joining("&"));
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(properties.getApiBaseUrl() + "/v1/reference-data/locations?" + queryString))
+                    .header("Authorization", "Bearer " + token)
+                    .GET()
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            return response.body();
+
+        } catch (IOException | InterruptedException e) {
+            log.error("Error searching airports", e);
+            return "{}";
+        }
+    }
+
 }
