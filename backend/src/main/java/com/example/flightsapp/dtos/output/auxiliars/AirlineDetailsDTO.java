@@ -1,18 +1,19 @@
-package com.example.flightsapp.dtos.output;
-
+package com.example.flightsapp.dtos.output.auxiliars;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Represents airline information returned by the Amadeus API.
+ */
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class AirportTravelingsInfoDTO {
+public class AirlineDetailsDTO {
 
     private String airlineCode;   // maps to "iataCode"
-    private String terminal;
-    private String dateTime;  // maps to "at"
+    private String businessName;
 }

@@ -10,9 +10,17 @@ import org.springframework.stereotype.Component;
 @Getter
 @Setter
 public class AmadeusApiProperties {
+    /**
+     * Configuration properties holder for Amadeus API integration.
+     *
+     * Populated from application.properties (prefix amadeus.api).
+     * Example properties:
+     * amadeus.api.client-id, amadeus.api.client-secret, amadeus.api.token-url,
+     * amadeus.api.flight-search-url, amadeus.api.api-base-url
+     */
     private String clientId;
     private String clientSecret;
     private String tokenUrl;
     private String flightSearchUrl;
-    private String apiBaseUrl;  // <--- esto es necesario
+    private String apiBaseUrl;  // <--- CHECK THIS NAME
 }

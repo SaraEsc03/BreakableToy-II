@@ -1,4 +1,4 @@
-package com.example.flightsapp.dtos.output;
+package com.example.flightsapp.dtos.output.auxiliars;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -13,7 +13,6 @@ import lombok.Setter;
 @AllArgsConstructor
 public class AirportDetailsDTO {
 
-    private String type;   
     private String name;
-    private String airportCode;
+    private String airportCode; // maps to "iataCode"
 }
