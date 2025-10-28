@@ -1,6 +1,14 @@
 package com.example.flightsapp.mapper;
 
-import com.example.flightsapp.dtos.output.*;
+import com.example.flightsapp.dtos.output.flights.AirportTravelingsInfoDTO;
+import com.example.flightsapp.dtos.output.flights.AmenitiesDTO;
+import com.example.flightsapp.dtos.output.flights.FareDetailsDTO;
+import com.example.flightsapp.dtos.output.flights.FlightOfferResponseDTO;
+import com.example.flightsapp.dtos.output.flights.ItineraryDTO;
+import com.example.flightsapp.dtos.output.flights.PriceTotalsResponseDTO;
+import com.example.flightsapp.dtos.output.flights.PriceTravelerDetailsDTO;
+import com.example.flightsapp.dtos.output.flights.SegmentDTO;
+import com.example.flightsapp.dtos.output.flights.TravelerPricingsResponseDTO;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -11,6 +19,21 @@ import java.util.List;
 
 @Component
 public class AmadeusResponseMapper {
+
+    /**
+     * Mapper for Amadeus flight-offers JSON responses.
+     *
+     * Purpose: convert the raw Amadeus JSON structure into the project's
+     * internal DTOs (located under dtos.output.flights). This class encapsulates
+     * the parsing rules and defensive checks required when fields are optional
+     * or missing in the third-party response.
+     *
+     * Notes:
+     * - This mapper intentionally works with Gson JsonObjects to avoid creating
+     *   intermediate generic Maps and to keep mapping logic explicit.
+     * - The mapper does not perform network calls or validation of business
+     *   rules; it only translates JSON -> DTOs.
+     */
 
     public List<FlightOfferResponseDTO> mapFlightOffers(JsonObject amadeusResponse) {
         List<FlightOfferResponseDTO> flightOffers = new ArrayList<>();
@@ -26,6 +49,7 @@ public class AmadeusResponseMapper {
     }
 
     private FlightOfferResponseDTO mapFlightOffer(JsonObject offer) {
+        // Create and populate a FlightOfferResponseDTO from an Amadeus 'data' element
         FlightOfferResponseDTO dto = new FlightOfferResponseDTO();
         dto.setId(offer.get("id").getAsString());
 
@@ -64,6 +88,7 @@ public class AmadeusResponseMapper {
     }
 
     private PriceTotalsResponseDTO mapPrice(JsonObject price) {
+        // Map price totals (currency, total, base, grandTotal) into DTO
         PriceTotalsResponseDTO priceDTO = new PriceTotalsResponseDTO();
         priceDTO.setCurrency(price.get("currency").getAsString());
         priceDTO.setTotal(price.get("total").getAsString());
@@ -73,6 +98,7 @@ public class AmadeusResponseMapper {
     }
 
     private ItineraryDTO mapItinerary(JsonObject itinerary) {
+        // Map a single itinerary which may contain multiple flight segments
         ItineraryDTO dto = new ItineraryDTO();
         dto.setTotalDuration(itinerary.get("duration").getAsString());
 
@@ -92,6 +118,8 @@ public class AmadeusResponseMapper {
     }
 
     private SegmentDTO mapSegment(JsonObject segment) {
+        // Map a flight segment. Handles optional fields like aircraft and
+        // operating carrier gracefully.
         SegmentDTO dto = new SegmentDTO();
         dto.setId(segment.get("id").getAsString());
         dto.setDuration(segment.get("duration").getAsString());
@@ -122,6 +150,9 @@ public class AmadeusResponseMapper {
     }
 
     private TravelerPricingsResponseDTO mapTravelerPricing(JsonObject travelerPricing) {
+        // Map traveler pricing details for a single traveler (id, type, price,
+        // and fare details per segment). The caller may use the first traveler
+        // pricing as a representative price per traveler.
         TravelerPricingsResponseDTO dto = new TravelerPricingsResponseDTO();
         dto.setTravelerId(travelerPricing.get("travelerId").getAsString());
         dto.setTravelerType(travelerPricing.get("travelerType").getAsString());
@@ -148,6 +179,7 @@ public class AmadeusResponseMapper {
     }
 
     private PriceTravelerDetailsDTO mapPriceTravelerDetails(JsonObject price) {
+        // Map price details specific to a traveler
         PriceTravelerDetailsDTO dto = new PriceTravelerDetailsDTO();
         dto.setCurrency(price.get("currency").getAsString());
         dto.setTotal(price.get("total").getAsString());
@@ -156,6 +188,7 @@ public class AmadeusResponseMapper {
     }
 
     private FareDetailsDTO mapFareDetails(JsonObject fareDetail) {
+        // Map fare details by segment including cabin and amenity list
         FareDetailsDTO dto = new FareDetailsDTO();
         dto.setSegmentId(fareDetail.get("segmentId").getAsString());
         dto.setCabin(fareDetail.get("cabin").getAsString());
@@ -178,6 +211,7 @@ public class AmadeusResponseMapper {
     }
 
     private AmenitiesDTO mapAmenity(JsonObject amenity) {
+        // Map a single amenity (description + whether it is chargeable)
         AmenitiesDTO dto = new AmenitiesDTO();
         dto.setDescription(amenity.get("description").getAsString());
         dto.setIsChargeable(amenity.get("isChargeable").getAsBoolean());
@@ -185,6 +219,9 @@ public class AmadeusResponseMapper {
     }
 
     private AirportTravelingsInfoDTO mapAirportInfo(JsonObject airportInfo) {
+        // Map the small airport/time block that appears inside a segment
+        // (departure/arrival). Some properties like terminal may be optional
+        // so we check for their presence and nullability.
         AirportTravelingsInfoDTO dto = new AirportTravelingsInfoDTO();
         dto.setAirlineCode(airportInfo.get("iataCode").getAsString());
         

@@ -2,6 +2,17 @@ package com.example.flightsapp.dtos.output;
 
 import org.junit.jupiter.api.Test;
 
+import com.example.flightsapp.dtos.output.flights.AirportTravelingsInfoDTO;
+import com.example.flightsapp.dtos.output.flights.AmenitiesDTO;
+import com.example.flightsapp.dtos.output.flights.FareDetailsDTO;
+import com.example.flightsapp.dtos.output.flights.FeesResponseDTO;
+import com.example.flightsapp.dtos.output.flights.FlightOfferResponseDTO;
+import com.example.flightsapp.dtos.output.flights.ItineraryDTO;
+import com.example.flightsapp.dtos.output.flights.PriceTotalsResponseDTO;
+import com.example.flightsapp.dtos.output.flights.PriceTravelerDetailsDTO;
+import com.example.flightsapp.dtos.output.flights.SegmentDTO;
+import com.example.flightsapp.dtos.output.flights.TravelerPricingsResponseDTO;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class OutputDTOsSimpleTest {

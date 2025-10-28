@@ -1,6 +1,15 @@
 package com.example.flightsapp.mapper;
 
 import com.example.flightsapp.dtos.output.*;
+import com.example.flightsapp.dtos.output.flights.AirportTravelingsInfoDTO;
+import com.example.flightsapp.dtos.output.flights.AmenitiesDTO;
+import com.example.flightsapp.dtos.output.flights.FareDetailsDTO;
+import com.example.flightsapp.dtos.output.flights.FlightOfferResponseDTO;
+import com.example.flightsapp.dtos.output.flights.ItineraryDTO;
+import com.example.flightsapp.dtos.output.flights.PriceTotalsResponseDTO;
+import com.example.flightsapp.dtos.output.flights.PriceTravelerDetailsDTO;
+import com.example.flightsapp.dtos.output.flights.SegmentDTO;
+import com.example.flightsapp.dtos.output.flights.TravelerPricingsResponseDTO;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.junit.jupiter.api.BeforeEach;
