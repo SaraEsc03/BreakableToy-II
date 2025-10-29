@@ -2,10 +2,13 @@ package com.example.flightsapp.mapper;
 
 import com.example.flightsapp.FlightsResultDTO;
 import com.example.flightsapp.client.AmadeusApiClientService;
+import com.example.flightsapp.dtos.output.auxiliars.AirlineDetailsDTO;
 import com.example.flightsapp.dtos.output.flights.AirportTravelingsInfoDTO;
 import com.example.flightsapp.dtos.output.flights.FlightOfferResponseDTO;
 import com.example.flightsapp.dtos.output.flights.ItineraryDTO;
 import com.example.flightsapp.dtos.output.flights.SegmentDTO;
+
+import java.util.Map;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -31,10 +34,10 @@ public class FlightsResultMapper {
      *   warm to minimize network calls.
      */
 
-    private final AmadeusApiClientService airportService;
+    private final AmadeusApiClientService amadeusService;
 
-    public FlightsResultMapper(AmadeusApiClientService airportService) {
-        this.airportService = airportService;
+    public FlightsResultMapper(AmadeusApiClientService amadeusService) {
+        this.amadeusService = amadeusService;
     }
 
     public FlightsResultDTO toFlightsResult(List<FlightOfferResponseDTO> offers) {
@@ -83,7 +86,7 @@ public class FlightsResultMapper {
                             AirportTravelingsInfoDTO dep = s.getDeparture();
                             if (dep != null) {
                                 String code = dep.getAirlineCode();
-                                FlightsResultDTO.AirportInfo ai = airportService.getAirportInfoByCode(code);
+                                FlightsResultDTO.AirportInfo ai = amadeusService.getAirportInfoByCode(code);
                                 seg.setDepartureAirport(ai);
                                 seg.setDepartureDateTime(dep.getDateTime());
                             }
@@ -92,7 +95,7 @@ public class FlightsResultMapper {
                             AirportTravelingsInfoDTO arr = s.getArrival();
                             if (arr != null) {
                                 String code = arr.getAirlineCode();
-                                FlightsResultDTO.AirportInfo ai = airportService.getAirportInfoByCode(code);
+                                FlightsResultDTO.AirportInfo ai = amadeusService.getAirportInfoByCode(code);
                                 seg.setArrivalAirport(ai);
                                 seg.setArrivalDateTime(arr.getDateTime());
                             }
@@ -101,14 +104,18 @@ public class FlightsResultMapper {
                             seg.setAircraftType(s.getAircraft());
                             seg.setDuration(s.getDuration());
 
-                            // airline info (code only; name not available here)
+                            // airline info with names from lookup
                             FlightsResultDTO.AirlineInfo airline = new FlightsResultDTO.AirlineInfo();
                             airline.setCode(s.getCarrierCode());
+                            airline.setName("Unknown Airline"); // Will be updated in second pass
                             seg.setAirline(airline);
 
-                            FlightsResultDTO.AirlineInfo operating = new FlightsResultDTO.AirlineInfo();
-                            operating.setCode(s.getOperating());
-                            seg.setOperatingAirline(operating);
+                            if (s.getOperating() != null) {
+                                FlightsResultDTO.AirlineInfo operating = new FlightsResultDTO.AirlineInfo();
+                                operating.setCode(s.getOperating());
+                                operating.setName("Unknown Airline"); // Will be updated in second pass
+                                seg.setOperatingAirline(operating);
+                            }
 
                             segOutList.add(seg);
                         }
@@ -124,6 +131,35 @@ public class FlightsResultMapper {
         }
 
         result.setFlightOffers(outOffers);
+        
+        // Get all airline details in one API call and update names
+        Map<String, AirlineDetailsDTO> airlineDetails = amadeusService.getAirlinesForFlight(result);
+        
+        // Update airline names in all segments
+        for (FlightsResultDTO.FlightOffer offer : result.getFlightOffers()) {
+            for (FlightsResultDTO.Itinerary itinerary : offer.getItineraries()) {
+                for (FlightsResultDTO.Segment segment : itinerary.getSegments()) {
+                    // Update main airline name
+                    if (segment.getAirline() != null && segment.getAirline().getCode() != null) {
+                        String code = segment.getAirline().getCode();
+                        AirlineDetailsDTO details = airlineDetails.get(code);
+                        if (details != null) {
+                            segment.getAirline().setName(details.getBusinessName());
+                        }
+                    }
+                    
+                    // Update operating airline name if present
+                    if (segment.getOperatingAirline() != null && segment.getOperatingAirline().getCode() != null) {
+                        String code = segment.getOperatingAirline().getCode();
+                        AirlineDetailsDTO details = airlineDetails.get(code);
+                        if (details != null) {
+                            segment.getOperatingAirline().setName(details.getBusinessName());
+                        }
+                    }
+                }
+            }
+        }
+        
         return result;
     }
 }
