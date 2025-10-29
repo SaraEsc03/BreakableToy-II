@@ -4,9 +4,15 @@ import com.example.flightsapp.FlightsResultDTO;
 import com.example.flightsapp.client.AmadeusApiClientService;
 import com.example.flightsapp.dtos.output.auxiliars.AirlineDetailsDTO;
 import com.example.flightsapp.dtos.output.flights.AirportTravelingsInfoDTO;
+import com.example.flightsapp.dtos.output.flights.AmenitiesDTO;
+import com.example.flightsapp.dtos.output.flights.FareDetailsDTO;
+import com.example.flightsapp.dtos.output.flights.FeesResponseDTO;
 import com.example.flightsapp.dtos.output.flights.FlightOfferResponseDTO;
 import com.example.flightsapp.dtos.output.flights.ItineraryDTO;
+import com.example.flightsapp.dtos.output.flights.PriceTotalsResponseDTO;
+import com.example.flightsapp.dtos.output.flights.PriceTravelerDetailsDTO;
 import com.example.flightsapp.dtos.output.flights.SegmentDTO;
+import com.example.flightsapp.dtos.output.flights.TravelerPricingsResponseDTO;
 
 import java.util.Map;
 import org.springframework.stereotype.Component;
@@ -59,18 +65,74 @@ public class FlightsResultMapper {
             FlightsResultDTO.FlightOffer fo = new FlightsResultDTO.FlightOffer();
             fo.setId(src.getId());
 
-            // price totals
-            if (src.getPriceTotals() != null) {
-                fo.setTotalPrice(src.getPriceTotals().getGrandTotal());
-                fo.setCurrency(src.getPriceTotals().getCurrency());
+            // price totals -> map 1:1 into FlightsResultDTO.PriceTotals
+            PriceTotalsResponseDTO priceTotals = src.getPriceTotals();
+            if (priceTotals != null) {
+                FlightsResultDTO.PriceTotals outPrice = new FlightsResultDTO.PriceTotals();
+                outPrice.setCurrency(priceTotals.getCurrency());
+                outPrice.setTotal(priceTotals.getTotal());
+                outPrice.setBase(priceTotals.getBase());
+                outPrice.setGrandTotal(priceTotals.getGrandTotal());
+
+                // map fees array -> list
+                if (priceTotals.getFees() != null) {
+                    List<FlightsResultDTO.Fees> feesList = new ArrayList<>();
+                    for (FeesResponseDTO f : priceTotals.getFees()) {
+                        if (f == null) continue;
+                        FlightsResultDTO.Fees outFee = new FlightsResultDTO.Fees();
+                        outFee.setAmount(f.getAmount());
+                        outFee.setType(f.getType());
+                        feesList.add(outFee);
+                    }
+                    outPrice.setFees(feesList);
+                }
+
+                fo.setPriceTotals(outPrice);
             }
 
-            // traveler pricing (take first as representative)
-            if (src.getTravelerPricings() != null && src.getTravelerPricings().length > 0) {
-                try {
-                    fo.setPricePerTraveler(src.getTravelerPricings()[0].getPriceDetails().getTotal());
-                } catch (Exception ignored) {
+            // traveler pricings -> map each traveler pricing with nested details
+            if (src.getTravelerPricings() != null) {
+                List<FlightsResultDTO.TravelerPricings> tpList = new ArrayList<>();
+                for (TravelerPricingsResponseDTO tpSrc : src.getTravelerPricings()) {
+                    if (tpSrc == null) continue;
+                    FlightsResultDTO.TravelerPricings tpOut = new FlightsResultDTO.TravelerPricings();
+                    tpOut.setTravelerId(tpSrc.getTravelerId());
+
+                    // price details
+                    PriceTravelerDetailsDTO ptd = tpSrc.getPriceDetails();
+                    if (ptd != null) {
+                        FlightsResultDTO.PriceTravelerDetails outPtd = new FlightsResultDTO.PriceTravelerDetails();
+                        outPtd.setCurrency(ptd.getCurrency());
+                        outPtd.setTotal(ptd.getTotal());
+                        outPtd.setBase(ptd.getBase());
+                        tpOut.setPriceTravelerDetails(outPtd);
+                    }
+
+                    // fare details by segment: DTO expects a single FareDetails; pick first if available
+                    FareDetailsDTO[] fares = tpSrc.getFareDetailsBySegment();
+                    if (fares != null && fares.length > 0 && fares[0] != null) {
+                        FareDetailsDTO fd0 = fares[0];
+                        FlightsResultDTO.FareDetails outFare = new FlightsResultDTO.FareDetails();
+                        outFare.setSegmentId(fd0.getSegmentId());
+                        outFare.setCabin(fd0.getCabin());
+                        outFare.setClassTrip(fd0.getClassTrip());
+                        if (fd0.getAmenities() != null) {
+                            List<FlightsResultDTO.Amenities> amList = new ArrayList<>();
+                            for (AmenitiesDTO a : fd0.getAmenities()) {
+                                if (a == null) continue;
+                                FlightsResultDTO.Amenities outAmenity = new FlightsResultDTO.Amenities();
+                                outAmenity.setDescription(a.getDescription());
+                                outAmenity.setIsChargeable(a.getIsChargeable());
+                                amList.add(outAmenity);
+                            }
+                            outFare.setAmenities(amList);
+                        }
+                        tpOut.setFareDetailsBySegment(outFare);
+                    }
+
+                    tpList.add(tpOut);
                 }
+                fo.setTravelerPricings(tpList);
             }
 
             // itineraries
