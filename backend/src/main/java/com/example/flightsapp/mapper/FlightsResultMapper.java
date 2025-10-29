@@ -12,7 +12,10 @@ import java.util.Map;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+
+import com.example.flightsapp.utils.FlightTimeUtils;
 
 @Component
 public class FlightsResultMapper {
@@ -122,6 +125,25 @@ public class FlightsResultMapper {
                     }
 
                     outIti.setSegments(segOutList);
+                    
+                    // Calculate and set stop times if there are multiple segments
+                    if (iti.getSegments() != null && iti.getSegments().length > 1) {
+                        List<FlightsResultDTO.StopInfo> stopTimes = FlightTimeUtils.calculateStopTimes(Arrays.asList(iti.getSegments()));
+                        outIti.setStopTimes(stopTimes);
+                        
+                        // Update airport names in stop info using the airport service
+                        if (stopTimes != null) {
+                            for (FlightsResultDTO.StopInfo stopInfo : stopTimes) {
+                                if (stopInfo.getAirport() != null && stopInfo.getAirport().getCode() != null) {
+                                    FlightsResultDTO.AirportInfo airportInfo = amadeusService.getAirportInfoByCode(
+                                        stopInfo.getAirport().getCode()
+                                    );
+                                    stopInfo.setAirport(airportInfo);
+                                }
+                            }
+                        }
+                    }
+                    
                     itinerariesOut.add(outIti);
                 }
             }
