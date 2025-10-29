@@ -20,10 +20,9 @@ public class FlightsResultDTO {
     @AllArgsConstructor
     public static class FlightOffer {
         private String id;
+        private PriceTotals priceTotals;
+        private List<TravelerPricings> travelerPricings;
         private List<Itinerary> itineraries;
-        private String totalPrice;
-        private String pricePerTraveler;
-        private String currency;
     }
 
     @Getter
@@ -31,7 +30,8 @@ public class FlightsResultDTO {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Itinerary {
-        private String duration;
+        private String initialDepartureDateTime;
+        private String finalArrivalDateTime;   // Last arrival of the itinerary
         private String totalDuration;
         private List<Segment> segments;
         private List<StopInfo> stopTimes; // optional field
@@ -52,6 +52,69 @@ public class FlightsResultDTO {
         private String flightNumber;
         private String aircraftType;
         private String duration;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TravelerPricings{
+        private String travelerId;
+        private FareDetails fareDetailsBySegment;
+        private PriceTravelerDetails priceTravelerDetails;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class FareDetails{
+        private String segmentId;
+        private String cabin;
+        private String classTrip;
+        private List<Amenities> amenities;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Amenities{
+        private String description;
+        private Boolean isChargeable;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PriceTravelerDetails{
+        private String currency;
+        private String total;
+        private String base;
+
+    }
+
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PriceTotals{
+        private String currency;
+        private String total;
+        private String base;
+        private List<Fees> fees;
+        private String grandTotal;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Fees{
+        private String amount;
+        private String type;
     }
 
     @Getter

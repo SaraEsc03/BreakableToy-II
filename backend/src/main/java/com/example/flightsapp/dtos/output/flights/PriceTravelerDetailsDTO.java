@@ -1,4 +1,4 @@
-package com.example.flightsapp.dtos.output;
+package com.example.flightsapp.dtos.output.flights;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,10 +9,8 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PriceTotalsResponseDTO {
+public class PriceTravelerDetailsDTO {
     private String currency;
-    private String total; //total before fees
+    private String total;
     private String base;
-    private FeesResponseDTO[] fees;
-    private String grandTotal; 
 }

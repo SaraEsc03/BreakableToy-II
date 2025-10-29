@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.5.6</version>
+		<version>3.5.7</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.example</groupId>
@@ -49,34 +49,22 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<!-- Caffeine for caching with TTL/eviction -->
+		<dependency>
+			<groupId>com.github.ben-manes.caffeine</groupId>
+			<artifactId>caffeine</artifactId>
+		</dependency>
+		<!-- MockWebServer for lightweight HTTP stubbing in integration tests -->
+		<dependency>
+			<groupId>com.squareup.okhttp3</groupId>
+			<artifactId>mockwebserver</artifactId>
+			<version>4.11.0</version>
+			<scope>test</scope>
+		</dependency>
 		<dependency>
    <groupId>com.google.code.gson</groupId>
    <artifactId>gson</artifactId>
-   <version>2.13.1</version>
 </dependency>
-<!-- JUnit 5 (Jupiter) -->
-<dependency>
-    <groupId>org.junit.jupiter</groupId>
-    <artifactId>junit-jupiter</artifactId>
-    <version>5.10.2</version>
-    <scope>test</scope>
-</dependency>
-
-<!-- Mockito (para mocks de servicios) -->
-<dependency>
-    <groupId>org.mockito</groupId>
-    <artifactId>mockito-core</artifactId>
-    <version>5.12.0</version>
-    <scope>test</scope>
-</dependency>
-
-<!-- Spring Boot Test (para probar controladores y contextos de Spring) -->
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-test</artifactId>
-    <scope>test</scope>
-</dependency>
-
 	</dependencies>
 
 	<build>

@@ -17,11 +17,11 @@ import lombok.Setter;
 public class FlightSearchDTO {
 
     @NotBlank
-    private String origin;
+    private String origin; //Airport code
 
     @NotBlank
-    private String destination;
-
+    private String destination; //Airport code
+ 
     @NotBlank
     private String departureDate; // YYYY-MM-DD
 
