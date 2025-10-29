@@ -20,11 +20,13 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Map;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import com.example.flightsapp.FlightsResultDTO;
+import com.example.flightsapp.dtos.output.auxiliars.AirlineDetailsDTO;
+import com.example.flightsapp.mapper.AmadeusAirlineMapper;
 
 @Service
 @Slf4j
@@ -39,24 +41,14 @@ public class AmadeusApiClientService {
      *   is responsible for converting the JSON into DTOs).
      * - Provide airport lookup/autocomplete with a simple in-memory cache to
      *   avoid frequent identical requests.
-     *
-     * Notes on caching and thread-safety:
-     * - `codeCache` and `queryCache` are ConcurrentHashMaps for simple thread
-     *   safety. They do not implement TTL/eviction; consider using Caffeine or
-     *   adding TTL logic for production.
-     * - Token refresh is naive: it refreshes when the cached expiry is past.
-     *   Under heavy concurrency you may want to synchronize refresh to avoid
-     *   duplicate token requests.
      */
 
-    // Caffeine caches: codeCache maps IATA code -> AirportDetailsDTO; queryCache maps
-    // normalized query -> list of AirportDetailsDTO (top results). These provide
-    // TTL and size-based eviction to avoid unbounded memory growth.
     private final Cache<String, AirportDetailsDTO> codeCache;
     private final Cache<String, java.util.List<AirportDetailsDTO>> queryCache;
     private final HttpClient httpClient;
     private final AmadeusApiProperties properties;
     private final AmadeusAirportMapper mapper;
+    private final AmadeusAirlineMapper airlineMapper;
 
     private String accessToken;
     private Instant tokenExpiry;
@@ -68,6 +60,7 @@ public class AmadeusApiClientService {
         this.httpClient = HttpClient.newHttpClient();
         this.properties = properties;
         this.mapper = new AmadeusAirportMapper();
+        this.airlineMapper = new AmadeusAirlineMapper();
 
         // Initialize caches with sensible defaults (tunable)
         this.codeCache = Caffeine.newBuilder()
@@ -282,4 +275,79 @@ public class AmadeusApiClientService {
         }
     }
 
+
+
+
+   // === AIRLINES =================================================================================
+    
+    /**
+     * Get airline details for all airlines in a flight result.
+     * This method extracts all unique airline codes from the segments,
+     * fetches their details in a single API call, and returns a map
+     * for easy lookup when building the response.
+     */
+    public Map<String, AirlineDetailsDTO> getAirlinesForFlight(FlightsResultDTO flightResult) {
+        if (flightResult == null || flightResult.getFlightOffers() == null) {
+            return new HashMap<>();
+        }
+
+        // Extract unique airline codes from all segments
+        Set<String> uniqueAirlineCodes = flightResult.getFlightOffers().stream()
+            .flatMap(offer -> offer.getItineraries().stream())
+            .flatMap(itinerary -> itinerary.getSegments().stream())
+            .flatMap(segment -> Stream.of(
+                segment.getAirline().getCode(),
+                segment.getOperatingAirline() != null ? segment.getOperatingAirline().getCode() : null
+            ))
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+
+        // If no airlines found, return empty map
+        if (uniqueAirlineCodes.isEmpty()) {
+            return new HashMap<>();
+        }
+
+        // Get all airline details in a single API call
+        String response = getAirlineDetails(uniqueAirlineCodes.toArray(new String[0]));
+        List<AirlineDetailsDTO> airlines = airlineMapper.parseAirlineDetailsList(response);
+
+        // Convert to map for easy lookup
+        return airlines.stream()
+            .collect(Collectors.toMap(
+                AirlineDetailsDTO::getAirlineCode,
+                airline -> airline,
+                (existing, replacement) -> existing  // Keep first occurrence on duplicate
+            ));
+    }
+
+    public String getAirlineDetails(String... airlineCodes) {
+        // Direct call to Amadeus reference-data/airlines. Returns raw JSON as
+        // a String with airline details. Accepts multiple airline codes and
+        // combines them into a single request using comma separation.
+        try {
+            String token = getValidAccessToken();
+            
+            // Join multiple codes with comma for the API
+            String combinedCodes = String.join(",", airlineCodes);
+            
+            String url = String.format("%s/v1/reference-data/airlines?airlineCodes=%s",
+                properties.getApiBaseUrl(),
+                URLEncoder.encode(combinedCodes, StandardCharsets.UTF_8));
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .header("Authorization", "Bearer " + token)
+                    .GET()
+                    .build();
+
+        log.debug("Calling Amadeus airlines API: {}", request.uri());
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        log.debug("Amadeus airlines API returned {}", response.statusCode());
+        return response.body();
+
+        } catch (IOException | InterruptedException e) {
+            log.error("Error fetching airline details", e);
+            return "{}";
+        }
+    }
 }

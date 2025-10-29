@@ -31,7 +31,6 @@ public class FlightsResultDTO {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Itinerary {
-        private String duration;
         private String totalDuration;
         private List<Segment> segments;
         private List<StopInfo> stopTimes; // optional field
