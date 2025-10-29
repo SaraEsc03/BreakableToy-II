@@ -1,6 +1,6 @@
 package com.example.flightsapp.mapper;
 
-import com.example.flightsapp.dtos.output.*;
+
 import com.example.flightsapp.dtos.output.flights.AirportTravelingsInfoDTO;
 import com.example.flightsapp.dtos.output.flights.AmenitiesDTO;
 import com.example.flightsapp.dtos.output.flights.FareDetailsDTO;

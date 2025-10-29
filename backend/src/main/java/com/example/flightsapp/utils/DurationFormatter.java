@@ -4,13 +4,10 @@ import java.time.Duration;
 
 /**
  * Utility class for formatting durations in ISO-8601 format.
- * Used across the application for consistent duration formatting in:
- * - Itinerary total duration
- * - Segment duration
- * - Stop/layover duration
  */
-public class DurationFormatter {
 
+
+public class DurationFormatter {
     /**
      * Formats a Duration object into ISO-8601 duration format.
      * Examples:
@@ -40,17 +37,7 @@ public class DurationFormatter {
         return formatted.toString();
     }
 
-    /**
-     * Parses an ISO-8601 duration string into a Duration object.
-     * Supports hour (H) and minute (M) units.
-     * Examples:
-     * - "PT2H30M" -> 2 hours and 30 minutes
-     * - "PT1H" -> 1 hour
-     * - "PT45M" -> 45 minutes
-     *
-     * @param durationStr The ISO-8601 duration string to parse
-     * @return Duration object, or null if the string is invalid
-     */
+
     /**
      * Formats a Duration object into human-readable text.
      * Examples:
@@ -83,6 +70,19 @@ public class DurationFormatter {
         return formatted.toString();
     }
 
+
+
+ /**
+     * Parses an ISO-8601 duration string into a Duration object.
+     * Supports hour (H) and minute (M) units.
+     * Examples:
+     * - "PT2H30M" -> 2 hours and 30 minutes
+     * - "PT1H" -> 1 hour
+     * - "PT45M" -> 45 minutes
+     *
+     * @param durationStr The ISO-8601 duration string to parse
+     * @return Duration object, or null if the string is invalid
+     */
     public static Duration parseDuration(String durationStr) {
         if (durationStr == null || !durationStr.startsWith("PT")) {
             return null;
@@ -109,5 +109,18 @@ public class DurationFormatter {
         } catch (NumberFormatException | IndexOutOfBoundsException e) {
             return null;
         }
+    }
+
+    /**
+     * Parse an ISO-8601 duration string and return a human-readable version.
+     * If the input is already null or cannot be parsed, returns null.
+     *
+     * @param isoDuration ISO-8601 duration string like "PT2H30M"
+     * @return human-readable string like "2h 30m" or null if unparsable
+     */
+    public static String formatHuman(String isoDuration) {
+        if (isoDuration == null) return null;
+        Duration d = parseDuration(isoDuration);
+        return d == null ? null : formatHuman(d);
     }
 }

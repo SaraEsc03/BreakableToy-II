@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.example.flightsapp.utils.FlightTimeUtils;
+import com.example.flightsapp.utils.DurationFormatter;
 
 @Component
 public class FlightsResultMapper {
@@ -77,10 +78,23 @@ public class FlightsResultMapper {
             if (src.getItineraries() != null) {
                 for (ItineraryDTO iti : src.getItineraries()) {
                     FlightsResultDTO.Itinerary outIti = new FlightsResultDTO.Itinerary();
-                    outIti.setTotalDuration(iti.getTotalDuration());
+                    // Convert itinerary total duration (ISO format) to human-readable
+                    outIti.setTotalDuration(DurationFormatter.formatHuman(iti.getTotalDuration()));
 
                     List<FlightsResultDTO.Segment> segOutList = new ArrayList<>();
+                    // Initialize first departure and last arrival as null
+                    String firstDeparture = null;
+                    String lastArrival = null;
+                    
                     if (iti.getSegments() != null) {
+                        SegmentDTO[] segments = iti.getSegments();
+                        // Get first departure from first segment
+                        if (segments.length > 0) {
+                            firstDeparture = segments[0].getDeparture().getDateTime();
+                            // Get last arrival from last segment
+                            lastArrival = segments[segments.length - 1].getArrival().getDateTime();
+                        }
+                        
                         for (SegmentDTO s : iti.getSegments()) {
                             FlightsResultDTO.Segment seg = new FlightsResultDTO.Segment();
                             seg.setId(s.getId());
@@ -105,7 +119,8 @@ public class FlightsResultMapper {
 
                             seg.setFlightNumber(s.getNumber());
                             seg.setAircraftType(s.getAircraft());
-                            seg.setDuration(s.getDuration());
+                            // Convert segment duration (ISO format) to human-readable
+                            seg.setDuration(DurationFormatter.formatHuman(s.getDuration()));
 
                             // airline info with names from lookup
                             FlightsResultDTO.AirlineInfo airline = new FlightsResultDTO.AirlineInfo();
@@ -125,15 +140,17 @@ public class FlightsResultMapper {
                     }
 
                     outIti.setSegments(segOutList);
+                    outIti.setInitialDepartureDateTime(firstDeparture);
+                    outIti.setFinalArrivalDateTime(lastArrival);
                     
                     // Calculate and set stop times if there are multiple segments
                     if (iti.getSegments() != null && iti.getSegments().length > 1) {
                         List<FlightsResultDTO.StopInfo> stopTimes = FlightTimeUtils.calculateStopTimes(Arrays.asList(iti.getSegments()));
-                        outIti.setStopTimes(stopTimes);
-                        
-                        // Update airport names in stop info using the airport service
+                        // Convert stop durations to human-readable and attach
                         if (stopTimes != null) {
                             for (FlightsResultDTO.StopInfo stopInfo : stopTimes) {
+                                // convert ISO duration to human form
+                                stopInfo.setDuration(DurationFormatter.formatHuman(stopInfo.getDuration()));
                                 if (stopInfo.getAirport() != null && stopInfo.getAirport().getCode() != null) {
                                     FlightsResultDTO.AirportInfo airportInfo = amadeusService.getAirportInfoByCode(
                                         stopInfo.getAirport().getCode()
@@ -141,6 +158,7 @@ public class FlightsResultMapper {
                                     stopInfo.setAirport(airportInfo);
                                 }
                             }
+                            outIti.setStopTimes(stopTimes);
                         }
                     }
                     

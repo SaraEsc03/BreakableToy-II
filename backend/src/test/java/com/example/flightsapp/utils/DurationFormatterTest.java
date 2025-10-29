@@ -9,27 +9,6 @@ import org.junit.jupiter.api.Test;
 class DurationFormatterTest {
 
     @Test
-    void formatDuration_hoursAndMinutes() {
-        Duration d = Duration.ofHours(2).plusMinutes(30);
-        String s = DurationFormatter.formatDuration(d);
-        assertEquals("PT2H30M", s);
-    }
-
-    @Test
-    void formatDuration_hoursOnly() {
-        Duration d = Duration.ofHours(1);
-        String s = DurationFormatter.formatDuration(d);
-        assertEquals("PT1H", s); // hours-only formats as "PT1H"
-    }
-
-    @Test
-    void formatDuration_minutesOnly() {
-        Duration d = Duration.ofMinutes(45);
-        String s = DurationFormatter.formatDuration(d);
-        assertEquals("PT45M", s);
-    }
-
-    @Test
     void parseDuration_hoursAndMinutes() {
         Duration d = DurationFormatter.parseDuration("PT2H30M");
         assertNotNull(d);
@@ -59,5 +38,26 @@ class DurationFormatterTest {
         assertNull(DurationFormatter.parseDuration(""));
         assertNull(DurationFormatter.parseDuration("2H30M"));
         assertNull(DurationFormatter.parseDuration("P2DT3H"));
+    }
+
+    @Test
+    void formatHuman_hoursAndMinutes() {
+        Duration d = Duration.ofHours(2).plusMinutes(30);
+        String s = DurationFormatter.formatHuman(d);
+        assertEquals("2h 30m", s);
+    }
+
+    @Test
+    void formatHuman_hoursOnly() {
+        Duration d = Duration.ofHours(1);
+        String s = DurationFormatter.formatHuman(d);
+        assertEquals("1h", s);
+    }
+
+    @Test
+    void formatHuman_minutesOnly() {
+        Duration d = Duration.ofMinutes(45);
+        String s = DurationFormatter.formatHuman(d);
+        assertEquals("45m", s);
     }
 }

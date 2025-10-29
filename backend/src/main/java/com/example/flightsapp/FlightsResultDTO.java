@@ -20,10 +20,10 @@ public class FlightsResultDTO {
     @AllArgsConstructor
     public static class FlightOffer {
         private String id;
-        private List<Itinerary> itineraries;
         private String totalPrice;
         private String pricePerTraveler;
         private String currency;
+        private List<Itinerary> itineraries;
     }
 
     @Getter
@@ -31,6 +31,8 @@ public class FlightsResultDTO {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Itinerary {
+        private String initialDepartureDateTime;
+        private String finalArrivalDateTime;   // Last arrival of the itinerary
         private String totalDuration;
         private List<Segment> segments;
         private List<StopInfo> stopTimes; // optional field
