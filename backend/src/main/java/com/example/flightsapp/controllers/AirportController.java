@@ -1,6 +1,6 @@
 package com.example.flightsapp.controllers;
 
-import com.example.flightsapp.client.AmadeusApiClientService;
+import com.example.flightsapp.client.AirportDirectory;
 import com.example.flightsapp.dtos.output.auxiliars.AirportDetailsDTO;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -23,10 +23,10 @@ public class AirportController {
      * - Delegates caching and API calls to AmadeusApiClientService.
      */
 
-    private final AmadeusApiClientService amadeusApiClientService;
+    private final AirportDirectory airportDirectory;
 
-    public AirportController(AmadeusApiClientService amadeusApiClientService) {
-        this.amadeusApiClientService = amadeusApiClientService;
+    public AirportController(AirportDirectory airportDirectory) {
+        this.airportDirectory = airportDirectory;
     }
 
     @GetMapping("/api/v1/airports/search")
@@ -34,6 +34,6 @@ public class AirportController {
                                                  @RequestParam(value = "limit", defaultValue = "10") int limit) {
         // Protect callers from empty queries and forward to the client
         if (q == null || q.trim().length() < 1) return List.of();
-        return amadeusApiClientService.searchAirportsForAutocomplete(q, limit);
+        return airportDirectory.searchAirportsForAutocomplete(q, limit);
     }
 }

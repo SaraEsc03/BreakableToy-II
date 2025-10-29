@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.flightsapp.client.AmadeusApiClientService;
+import com.example.flightsapp.client.AirportDirectory;
 import com.example.flightsapp.dtos.output.auxiliars.AirportDetailsDTO;
 
 @RestController
@@ -23,10 +23,10 @@ public class AirportSearchController {
      * returns the mapped AirportDetailsDTO list.
      */
 
-    private final AmadeusApiClientService clientService;
+    private final AirportDirectory airportDirectory;
 
-    public AirportSearchController(AmadeusApiClientService clientService) {
-        this.clientService = clientService;
+    public AirportSearchController(AirportDirectory airportDirectory) {
+        this.airportDirectory = airportDirectory;
     }
 
     @GetMapping("/airports")
@@ -35,7 +35,7 @@ public class AirportSearchController {
             @RequestParam(defaultValue = "0") int pageoffset)
             {
 
-        List<AirportDetailsDTO> results = clientService.searchAirportsForAutocomplete(keyword, pageoffset);
+        List<AirportDetailsDTO> results = airportDirectory.searchAirportsForAutocomplete(keyword, pageoffset);
         return ResponseEntity.ok(results);
     }
 }

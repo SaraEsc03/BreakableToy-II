@@ -30,7 +30,7 @@ import com.example.flightsapp.mapper.AmadeusAirlineMapper;
 
 @Service
 @Slf4j
-public class AmadeusApiClientService {
+public class AmadeusApiClientService implements TokenProvider, FlightOffersClient, AirportDirectory, AirlineDirectory {
 
     /**
      * Client service that interacts with the Amadeus APIs.
@@ -102,7 +102,8 @@ public class AmadeusApiClientService {
         this.tokenExpiry = Instant.now().plusSeconds(expiresIn - 60);
     }
 
-    private String getValidAccessToken() throws IOException, InterruptedException {
+    @Override
+    public String getValidAccessToken() throws IOException, InterruptedException {
         // Double-checked locking: avoid multiple threads performing token
         // refresh simultaneously.
         if (accessToken == null || tokenExpiry == null || Instant.now().isAfter(tokenExpiry)) {
@@ -119,6 +120,7 @@ public class AmadeusApiClientService {
     }
 
     // === FLIGHTS ===============================================================================
+    @Override
     public String searchFlights(com.example.flightsapp.dtos.input.FlightSearchDTO req) {
         // Build the Amadeus /v2/shopping/flight-offers request from the input
         // FlightSearchDTO and return the raw JSON response as a String.
@@ -167,6 +169,7 @@ public class AmadeusApiClientService {
     // === AIRPORTS =================================================================================
 
     // GET AIRPORT DETAILS BY CODE WITH CACHING
+    @Override
     public List<AirportDetailsDTO> searchAirportsForAutocomplete(String keyword, int limit) {
         // Return cached autocomplete results when available; otherwise call the
         // Amadeus reference-data API and map the response into
@@ -207,6 +210,7 @@ public class AmadeusApiClientService {
 
     
     // TRANSFORM TO AirportInfo FOR FLIGHT
+    @Override
     public AirportInfo getAirportInfoByCode(String code) {
         // Resolve an airport code to a minimal AirportInfo used by the
         // frontend. This method first consults the codeCache and falls back to
@@ -232,6 +236,7 @@ public class AmadeusApiClientService {
 
 
     //DIRECT AIRPORTS API CALL 
+    @Override
     public String searchAirports(String keyword, int pageoffset) {
         // Direct call to Amadeus reference-data/locations. Returns raw JSON as
         // a String. This method handles token acquisition and basic request
@@ -286,6 +291,7 @@ public class AmadeusApiClientService {
      * fetches their details in a single API call, and returns a map
      * for easy lookup when building the response.
      */
+    @Override
     public Map<String, AirlineDetailsDTO> getAirlinesForFlight(FlightsResultDTO flightResult) {
         if (flightResult == null || flightResult.getFlightOffers() == null) {
             return new HashMap<>();
@@ -320,6 +326,7 @@ public class AmadeusApiClientService {
             ));
     }
 
+    @Override
     public String getAirlineDetails(String... airlineCodes) {
         // Direct call to Amadeus reference-data/airlines. Returns raw JSON as
         // a String with airline details. Accepts multiple airline codes and

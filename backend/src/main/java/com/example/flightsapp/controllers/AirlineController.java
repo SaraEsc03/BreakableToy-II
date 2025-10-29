@@ -1,6 +1,6 @@
 package com.example.flightsapp.controllers;
 
-import com.example.flightsapp.client.AmadeusApiClientService;
+import com.example.flightsapp.client.AirlineDirectory;
 import com.example.flightsapp.dtos.output.auxiliars.AirlineDetailsDTO;
 import com.example.flightsapp.mapper.AmadeusAirlineMapper;
 
@@ -22,17 +22,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1")
 public class AirlineController {
 
-    private final AmadeusApiClientService amadeusApiClientService;
+    private final AirlineDirectory airlineDirectory;
     private final AmadeusAirlineMapper airlineMapper;
 
-    public AirlineController(AmadeusApiClientService amadeusApiClientService, AmadeusAirlineMapper airlineMapper) {
-        this.amadeusApiClientService = amadeusApiClientService;
+    public AirlineController(AirlineDirectory airlineDirectory, AmadeusAirlineMapper airlineMapper) {
+        this.airlineDirectory = airlineDirectory;
         this.airlineMapper = airlineMapper;
     }
 
     @GetMapping("/airlines/{code}")
     public ResponseEntity<AirlineDetailsDTO> getAirlineDetails(@PathVariable @Valid String code) {
-        String rawResponse = amadeusApiClientService.getAirlineDetails(code);
+    String rawResponse = airlineDirectory.getAirlineDetails(code);
         AirlineDetailsDTO airline = airlineMapper.parseAirlineDetails(rawResponse);
         
         if (airline == null) {

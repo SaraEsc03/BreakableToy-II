@@ -3,8 +3,6 @@ package com.example.flightsapp.utils;
 import com.example.flightsapp.FlightsResultDTO;
 import com.example.flightsapp.dtos.output.flights.SegmentDTO;
 
-import com.example.flightsapp.utils.DurationFormatter;
-
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -68,7 +66,7 @@ public class FlightTimeUtils {
                         currentSegment.getArrival().getAirlineCode(),
                         null // Name will be populated by the mapper using airport service
                     ),
-                    DurationFormatter.formatDuration(stopDuration)
+                    DurationFormatter.formatHuman(stopDuration)
                 );
 
             stopTimes.add(stopInfo);
