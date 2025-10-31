@@ -32,3 +32,12 @@
     font-style: italic;
   }
 }
+
+button {
+  cursor: pointer;
+}
+
+.bg-cover {
+  background-size: cover;
+  background-position: center;
+}
