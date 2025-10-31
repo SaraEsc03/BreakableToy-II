@@ -1,4 +1,4 @@
-export default function FlightSearchView() {
+export default function SearchView() {
 	return (
 		<div>
 			<h1>Flight Search</h1>

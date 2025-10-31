@@ -1,4 +1,4 @@
-export default function FlightListView() {
+export default function DetailsSegment() {
 	return (
 		<div>
 			<h1>Flight List</h1>
