@@ -1,6 +1,5 @@
 package com.example.flightsapp;
 
-import com.example.flightsapp.FlightsAppApplication;
 import com.example.flightsapp.dtos.output.auxiliars.AirportDetailsDTO;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
