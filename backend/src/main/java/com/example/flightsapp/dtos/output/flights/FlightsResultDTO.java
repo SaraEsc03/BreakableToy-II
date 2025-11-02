@@ -1,4 +1,4 @@
-package com.example.flightsapp;
+package com.example.flightsapp.dtos.output.flights;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

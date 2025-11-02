@@ -1,7 +1,8 @@
 package com.example.flightsapp.mapper;
 
-import com.example.flightsapp.FlightsResultDTO;
-import com.example.flightsapp.client.AmadeusApiClientService;
+import com.example.flightsapp.dtos.output.flights.FlightsResultDTO;
+import com.example.flightsapp.client.interfaces.AirlineDirectory;
+import com.example.flightsapp.client.interfaces.AirportDirectory;
 import com.example.flightsapp.dtos.output.auxiliars.AirlineDetailsDTO;
 import com.example.flightsapp.dtos.output.flights.*;
 import org.junit.jupiter.api.Test;
@@ -18,13 +19,14 @@ class FlightsResultMapperTest {
 
     @Test
     void toFlightsResult_shouldMapPriceTotals_andTravelerPricings_andItineraryBasics() {
-        // Arrange: mock service used by mapper
-        AmadeusApiClientService amadeus = Mockito.mock(AmadeusApiClientService.class);
-        when(amadeus.getAirportInfoByCode("MEX")).thenReturn(new FlightsResultDTO.AirportInfo("MEX", "MEX Airport"));
-        when(amadeus.getAirportInfoByCode("LAX")).thenReturn(new FlightsResultDTO.AirportInfo("LAX", "LAX Airport"));
-        when(amadeus.getAirlinesForFlight(any(FlightsResultDTO.class))).thenReturn(Collections.<String, AirlineDetailsDTO>emptyMap());
+        // Arrange: mock services used by mapper
+        AirportDirectory airportDirectory = Mockito.mock(AirportDirectory.class);
+        AirlineDirectory airlineDirectory = Mockito.mock(AirlineDirectory.class);
+        when(airportDirectory.getAirportInfoByCode("MEX")).thenReturn(new FlightsResultDTO.AirportInfo("MEX", "MEX Airport"));
+        when(airportDirectory.getAirportInfoByCode("LAX")).thenReturn(new FlightsResultDTO.AirportInfo("LAX", "LAX Airport"));
+        when(airlineDirectory.getAirlinesForFlight(any(FlightsResultDTO.class))).thenReturn(Collections.<String, AirlineDetailsDTO>emptyMap());
 
-        FlightsResultMapper mapper = new FlightsResultMapper(amadeus);
+        FlightsResultMapper mapper = new FlightsResultMapper(airportDirectory, airlineDirectory);
 
         // Build a minimal FlightOfferResponseDTO tree
         AirportTravelingsInfoDTO dep = new AirportTravelingsInfoDTO("MEX", "T1", "2025-12-25T10:00:00");

@@ -1,7 +1,8 @@
 package com.example.flightsapp.mapper;
 
-import com.example.flightsapp.FlightsResultDTO;
-import com.example.flightsapp.client.AmadeusApiClientService;
+import com.example.flightsapp.dtos.output.flights.FlightsResultDTO;
+import com.example.flightsapp.client.interfaces.AirlineDirectory;
+import com.example.flightsapp.client.interfaces.AirportDirectory;
 import com.example.flightsapp.dtos.output.auxiliars.AirlineDetailsDTO;
 import com.example.flightsapp.dtos.output.flights.AirportTravelingsInfoDTO;
 import com.example.flightsapp.dtos.output.flights.AmenitiesDTO;
@@ -35,7 +36,7 @@ public class FlightsResultMapper {
      * - Pick representative pricing info (first traveler pricing) and
      *   attach totals/currency.
      * - Resolve airport codes to human-readable names via
-     *   AmadeusApiClientService.getAirportInfoByCode(...) (which consults a
+     *   AirportDirectory.getAirportInfoByCode(...) (which consults a
      *   local cache and falls back to the API).
      * - Produce a lightweight DTO shape optimized for the frontend.
      *
@@ -44,10 +45,12 @@ public class FlightsResultMapper {
      *   warm to minimize network calls.
      */
 
-    private final AmadeusApiClientService amadeusService;
+    private final AirportDirectory airportDirectory;
+    private final AirlineDirectory airlineDirectory;
 
-    public FlightsResultMapper(AmadeusApiClientService amadeusService) {
-        this.amadeusService = amadeusService;
+    public FlightsResultMapper(AirportDirectory airportDirectory, AirlineDirectory airlineDirectory) {
+        this.airportDirectory = airportDirectory;
+        this.airlineDirectory = airlineDirectory;
     }
 
     public FlightsResultDTO toFlightsResult(List<FlightOfferResponseDTO> offers) {
@@ -165,7 +168,7 @@ public class FlightsResultMapper {
                             AirportTravelingsInfoDTO dep = s.getDeparture();
                             if (dep != null) {
                                 String code = dep.getAirlineCode();
-                                FlightsResultDTO.AirportInfo ai = amadeusService.getAirportInfoByCode(code);
+                                FlightsResultDTO.AirportInfo ai = airportDirectory.getAirportInfoByCode(code);
                                 seg.setDepartureAirport(ai);
                                 seg.setDepartureDateTime(dep.getDateTime());
                             }
@@ -174,7 +177,7 @@ public class FlightsResultMapper {
                             AirportTravelingsInfoDTO arr = s.getArrival();
                             if (arr != null) {
                                 String code = arr.getAirlineCode();
-                                FlightsResultDTO.AirportInfo ai = amadeusService.getAirportInfoByCode(code);
+                                FlightsResultDTO.AirportInfo ai = airportDirectory.getAirportInfoByCode(code);
                                 seg.setArrivalAirport(ai);
                                 seg.setArrivalDateTime(arr.getDateTime());
                             }
@@ -214,7 +217,7 @@ public class FlightsResultMapper {
                                 // convert ISO duration to human form
                                 stopInfo.setDuration(DurationFormatter.formatHuman(stopInfo.getDuration()));
                                 if (stopInfo.getAirport() != null && stopInfo.getAirport().getCode() != null) {
-                                    FlightsResultDTO.AirportInfo airportInfo = amadeusService.getAirportInfoByCode(
+                                    FlightsResultDTO.AirportInfo airportInfo = airportDirectory.getAirportInfoByCode(
                                         stopInfo.getAirport().getCode()
                                     );
                                     stopInfo.setAirport(airportInfo);
@@ -235,7 +238,7 @@ public class FlightsResultMapper {
         result.setFlightOffers(outOffers);
         
         // Get all airline details in one API call and update names
-        Map<String, AirlineDetailsDTO> airlineDetails = amadeusService.getAirlinesForFlight(result);
+        Map<String, AirlineDetailsDTO> airlineDetails = airlineDirectory.getAirlinesForFlight(result);
         
         // Update airline names in all segments
         for (FlightsResultDTO.FlightOffer offer : result.getFlightOffers()) {
