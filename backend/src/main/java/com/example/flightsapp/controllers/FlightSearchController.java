@@ -5,9 +5,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.validation.annotation.Validated;
 
 import com.example.flightsapp.dtos.output.flights.FlightOfferResponseDTO;
-import com.example.flightsapp.FlightsResultDTO;
+import com.example.flightsapp.dtos.output.flights.FlightsResultDTO;
 import com.example.flightsapp.mapper.FlightsResultMapper;
-import com.example.flightsapp.client.AmadeusApiClientService;
+import com.example.flightsapp.client.interfaces.FlightOffersClient;
 import com.example.flightsapp.dtos.input.FlightSearchDTO;
 import com.example.flightsapp.mapper.AmadeusResponseMapper;
 import java.util.List;
@@ -22,14 +22,14 @@ import com.google.gson.JsonParser;
 @Validated
 public class FlightSearchController {
 
-    private final AmadeusApiClientService amadeusApiClientService;
+    private final FlightOffersClient flightOffersClient;
     private final AmadeusResponseMapper amadeusResponseMapper;
     private final FlightsResultMapper flightsResultMapper;
 
-    public FlightSearchController(AmadeusApiClientService amadeusApiClientService,
+    public FlightSearchController(FlightOffersClient flightOffersClient,
                                   AmadeusResponseMapper amadeusResponseMapper,
                                   FlightsResultMapper flightsResultMapper) {
-        this.amadeusApiClientService = amadeusApiClientService;
+        this.flightOffersClient = flightOffersClient;
         this.amadeusResponseMapper = amadeusResponseMapper;
         this.flightsResultMapper = flightsResultMapper;
     }
@@ -45,11 +45,11 @@ public class FlightSearchController {
     @GetMapping("/search")
     public FlightsResultDTO searchFlights(@Valid @ModelAttribute FlightSearchDTO request) {
         // Controller orchestration:
-        // 1) call the AmadeusApiClientService to fetch raw JSON
+    // 1) call the FlightOffersClient to fetch raw JSON
         // 2) map raw JSON to internal Amadeus DTOs with AmadeusResponseMapper
         // 3) convert to frontend FlightsResultDTO with FlightsResultMapper
         // Get raw JSON from client
-        String raw = amadeusApiClientService.searchFlights(request);
+    String raw = flightOffersClient.searchFlights(request);
 
         // Parse and map to Amadeus DTOs
         JsonObject json = JsonParser.parseString(raw).getAsJsonObject();
