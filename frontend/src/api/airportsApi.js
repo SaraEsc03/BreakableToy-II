@@ -17,5 +17,11 @@ export const autocompleteAirports = async (query, limit = 10, signal) => {
     params: { q: query, limit },
     signal,
   });
-  return response.data;
+  // Backend returns items with { name, airportCode }.
+  // Frontend expects only { name, code } and will concatenate them for display.
+  const items = Array.isArray(response.data) ? response.data : [];
+  return items.map((a) => ({
+    name: a.name || a.airportName || a.fullName || "",
+    code: a.airportCode || a.code || "",
+  }));
 };

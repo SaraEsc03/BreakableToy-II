@@ -20,20 +20,6 @@ export default function SearchView() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Autocomplete input values
-  const [originInput, _setOriginInput] = useState("");
-  const [destinationInput, _setDestinationInput] = useState("");
-
-  // When user types, clear the stored code so submit requires a fresh selection
-  const setOriginInput = (v: string) => {
-    _setOriginInput(v);
-    setFormData((prev) => ({ ...prev, departureAirport: "" }));
-  };
-  const setDestinationInput = (v: string) => {
-    _setDestinationInput(v);
-    setFormData((prev) => ({ ...prev, arrivalAirport: "" }));
-  };
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
@@ -109,12 +95,7 @@ export default function SearchView() {
                   label="Departure Airport"
                   required
                   placeholder="Type a city or code (e.g., JFK, New York)"
-                  inputValue={originInput}
-                  setInputValue={setOriginInput}
-                  onSelect={(a) => {
-                    setFormData((prev) => ({ ...prev, departureAirport: a.code }));
-                    setOriginInput(`${a.code} — ${a.name}${a.city ? ", " + a.city : ""}${a.country ? " (" + a.country + ")" : ""}`);
-                  }}
+                  onSelect={(a) => setFormData((prev) => ({ ...prev, departureAirport: a.code }))}
                 />
               </div>
 
@@ -124,12 +105,7 @@ export default function SearchView() {
                   label="Arrival Airport"
                   required
                   placeholder="Type a city or code (e.g., LAX, Los Angeles)"
-                  inputValue={destinationInput}
-                  setInputValue={setDestinationInput}
-                  onSelect={(a) => {
-                    setFormData((prev) => ({ ...prev, arrivalAirport: a.code }));
-                    setDestinationInput(`${a.code} — ${a.name}${a.city ? ", " + a.city : ""}${a.country ? " (" + a.country + ")" : ""}`);
-                  }}
+                  onSelect={(a) => setFormData((prev) => ({ ...prev, arrivalAirport: a.code }))}
                 />
               </div>
 

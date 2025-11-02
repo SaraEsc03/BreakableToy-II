@@ -12,11 +12,7 @@ type Options = {
   minLength?: number;
   debounceMs?: number;
   limit?: number;
-};
-
-// Simple in-memory cache with TTL
-const cache = new Map<string, { ts: number; data: Airport[] }>();
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+}; 
 
 type BackendAirport = Partial<Airport> & { code?: string; airportCode?: string; name?: string; city?: string; country?: string };
 
@@ -32,6 +28,10 @@ export function useAirportAutocomplete(options: Options = {}) {
 
   const abortRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef(0);
+  // When the component programmatically sets the input (e.g. on selection), we
+  // may want to avoid triggering a fetch for that value. Use this flag to
+  // ignore the next fetch cycle.
+  const ignoreNextFetchRef = useRef(false);
 
   const normalized = inputValue.trim().toLowerCase();
 
@@ -41,14 +41,6 @@ export function useAirportAutocomplete(options: Options = {}) {
         try {
           setError("");
           setLoading(true);
-
-          // Serve from cache if fresh
-          const cached = cache.get(query);
-          if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
-            setResults(cached.data);
-            setLoading(false);
-            return;
-          }
 
           abortRef.current?.abort();
           abortRef.current = new AbortController();
@@ -65,8 +57,6 @@ export function useAirportAutocomplete(options: Options = {}) {
               city: a.city,
               country: a.country,
             }));
-
-          cache.set(query, { ts: Date.now(), data: clean });
 
           // Only apply if latest
           if (requestIdRef.current === reqId) {
@@ -91,6 +81,11 @@ export function useAirportAutocomplete(options: Options = {}) {
       return;
     }
 
+    if (ignoreNextFetchRef.current) {
+      ignoreNextFetchRef.current = false;
+      return;
+    }
+
     setOpen(true);
     const id = ++requestIdRef.current;
     const t = setTimeout(() => fetchData(normalized, id), debounceMs);
@@ -107,6 +102,12 @@ export function useAirportAutocomplete(options: Options = {}) {
   return {
     inputValue,
     setInputValue,
+    // Expose a setter that skips the next fetch cycle. Use when programmatically
+    // updating input (for example, on selection) to avoid an unnecessary request.
+    setInputValueNoFetch: (v: string) => {
+      ignoreNextFetchRef.current = true;
+      setInputValue(v);
+    },
     results,
     loading,
     error,

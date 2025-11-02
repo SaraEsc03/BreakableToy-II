@@ -7,8 +7,6 @@ type Props = {
   required?: boolean;
   placeholder?: string;
   onSelect: (airport: Airport) => void;
-  inputValue: string; // visible input value
-  setInputValue: (v: string) => void;
 };
 
 export default function AirportAutocomplete({
@@ -16,14 +14,23 @@ export default function AirportAutocomplete({
   required,
   placeholder,
   onSelect,
-  inputValue,
-  setInputValue,
 }: Props) {
   const listId = useId();
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const { results, loading, error, open, setOpen, highlightedIndex, moveHighlight } =
-    useAirportAutocomplete({ minLength: 2, debounceMs: 300, limit: 10 });
+  // The hook manages its own input state used to trigger fetches.
+  const {
+    inputValue: localInputValue,
+    setInputValue: setLocalInputValue,
+    setInputValueNoFetch,
+    results,
+    loading,
+    error,
+    open,
+    setOpen,
+    highlightedIndex,
+    moveHighlight,
+  } = useAirportAutocomplete({ minLength: 2, debounceMs: 300, limit: 10 });
 
   // Close the popup when clicking outside
   useEffect(() => {
@@ -38,6 +45,13 @@ export default function AirportAutocomplete({
   }, [setOpen]);
 
   const handleSelect = (airport: Airport) => {
+    // update visible input inside the component
+    // set input without triggering a fetch (avoid new network request)
+    if (typeof setInputValueNoFetch === "function") {
+      setInputValueNoFetch(`${airport.name} (${airport.code})`);
+    } else {
+      setLocalInputValue(`${airport.name} (${airport.code})`);
+    }
     onSelect(airport);
     setOpen(false);
   };
@@ -54,9 +68,9 @@ export default function AirportAutocomplete({
         aria-controls={listId}
         aria-autocomplete="list"
         type="text"
-        value={inputValue}
+        value={localInputValue}
         onFocus={() => setOpen(true)}
-        onChange={(e) => setInputValue(e.target.value)}
+        onChange={(e) => setLocalInputValue(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === "ArrowDown") {
             e.preventDefault();
@@ -106,10 +120,8 @@ export default function AirportAutocomplete({
                   idx === highlightedIndex ? "bg-gray-100" : ""
                 }`}
               >
-                <span className="font-semibold">{a.code}</span>
-                <span className="text-gray-500"> — {a.name}</span>
-                {a.city && <span className="text-gray-500">, {a.city}</span>}
-                {a.country && <span className="text-gray-400"> ({a.country})</span>}
+                <span className="font-semibold">{a.name}</span>
+                <span className="text-gray-500"> ({a.code})</span>
               </button>
             ))}
         </div>
