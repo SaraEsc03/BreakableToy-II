@@ -30,8 +30,22 @@ public class AirportController {
     }
 
     @GetMapping("/api/v1/airports/search")
-    public List<AirportDetailsDTO> searchAirports(@RequestParam("q") String q,
-                                                 @RequestParam(value = "limit", defaultValue = "10") int limit) {
+    public List<AirportDetailsDTO> searchAirports(
+            @RequestParam("q") String q,
+            @RequestParam(value = "limit", required = false) String limitParam) {
+        // Sanitize and parse limit defensively: accept values like "10" or "10." and clamp to [1, 50]
+        int limit = 10; // default
+        if (limitParam != null) {
+            try {
+                String digits = limitParam.replaceAll("[^0-9]", "");
+                if (!digits.isEmpty()) {
+                    limit = Integer.parseInt(digits);
+                }
+            } catch (NumberFormatException ignored) { /* keep default */ }
+        }
+        if (limit <= 0) limit = 10;
+        if (limit > 50) limit = 50;
+
         // Protect callers from empty queries and forward to the client
         if (q == null || q.trim().length() < 1) return List.of();
         return amadeusApiClientService.searchAirportsForAutocomplete(q, limit);
