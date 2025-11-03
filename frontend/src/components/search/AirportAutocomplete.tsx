@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef } from "react";
-import type { Airport } from "../hooks/useAirportAutocomplete";
-import { useAirportAutocomplete } from "../hooks/useAirportAutocomplete";
+import type { Airport } from "../../hooks/useAirportAutocomplete";
+import { useAirportAutocomplete } from "../../hooks/useAirportAutocomplete";
 
 type Props = {
   label: string;
