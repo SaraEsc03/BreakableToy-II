@@ -1,119 +1,16 @@
-import { useEffect, useState } from "react";
-import { useLocation, useSearchParams, useNavigate } from "react-router-dom";
-import { searchFlights } from "../api/flightsApi";
+import { useNavigate } from "react-router-dom";
+import useFlightSearch from "../hooks/useFlightSearch";
 import listBg from "../assets/imgs/listBg.svg";
-
-// Minimal typing for FlightsResult shape returned by backend
-type AirportInfo = { code?: string; name?: string };
-type StopInfo = { airport?: AirportInfo; duration?: string };
-type AirlineInfo = { code?: string; name?: string };
-type Segment = { departureAirport?: AirportInfo; arrivalAirport?: AirportInfo; departureDateTime?: string; arrivalDateTime?: string; airline?: AirlineInfo; operatingAirline?: AirlineInfo };
-type Itinerary = { initialDepartureDateTime?: string; finalArrivalDateTime?: string; totalDuration?: string; segments?: Segment[]; stopTimes?: StopInfo[] };
-type PriceTravelerDetails = { currency?: string; total?: string; base?: string };
-type TravelerPricing = { travelerId?: string; fareDetailsBySegment?: unknown; priceTravelerDetails?: PriceTravelerDetails };
-type PriceTotals = { currency?: string; total?: string; base?: string; grandTotal?: string };
-
-type FlightOffer = {
-  id?: string;
-  priceTotals?: PriceTotals;
-  travelerPricings?: TravelerPricing[];
-  itineraries?: Itinerary[];
-};
-
-type FlightsResult = { flightOffers?: FlightOffer[] };
-
-function toIsoDate(mmddyyyy: string | null): string | null {
-  if (!mmddyyyy) return mmddyyyy;
-  const parts = mmddyyyy.split("/");
-  if (parts.length !== 3) return mmddyyyy;
-  const [mm, dd, yyyy] = parts;
-  return `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
-}
-
-function formatTimeShort(iso?: string) {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return iso;
-  return d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
-}
-
-function formatAmount(amount?: string) {
-  if (!amount) return "";
-  // remove existing commas, parse number
-  const n = Number(String(amount).replace(/,/g, ""));
-  if (Number.isNaN(n)) return amount;
-  return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
+import { formatTimeShort } from "../utils/formatters/date";
+import { formatAmount } from "../utils/formatters/number";
+import { getFirstAndLastSegment, getPrimaryAirline, getStopsSummary, getDisplayPrice } from "../utils/flightSelectors";
+import type { FlightOffer } from "../types/flight";
 
 export default function ListSingleTrips() {
-  const location = useLocation();
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [results, setResults] = useState<FlightsResult | null>(null);
-
-  useEffect(() => {
-    // If navigation passed flights in state, use them as initial data
-    const state = location.state as unknown as { flights?: FlightsResult } | null;
-    if (state && state.flights) {
-      setResults(state.flights);
-    }
-
-    // If there are query params, perform a fetch using them (preferred deep-link)
-  const origin = searchParams.get("origin");
-  const destination = searchParams.get("destination");
-  const departureDateRaw = searchParams.get("departureDate");
-
-    if (!origin || !destination || !departureDateRaw) {
-      // if we don't have required params and no state, show nothing (user can come from search)
-      return;
-    }
-
-    // convert frontend mm/dd/yyyy to yyyy-mm-dd if needed
-    const departureDate = departureDateRaw.includes("/")
-      ? toIsoDate(departureDateRaw)
-      : departureDateRaw;
-
-    const returnDateRaw = searchParams.get("returnDate");
-    // If the URL contains a returnDate, this is a round-trip request — redirect to the Round Trips fallback
-    if (returnDateRaw) {
-      navigate(`/round-trips?${searchParams.toString()}`);
-      return;
-    }
-    const returnDate = returnDateRaw
-      ? returnDateRaw.includes("/")
-        ? toIsoDate(returnDateRaw)
-        : returnDateRaw
-      : undefined;
-
-    const params = {
-      origin,
-      destination,
-      departureDate,
-      currencyCode: searchParams.get("currencyCode") || undefined,
-      returnDate,
-      nonStop: searchParams.get("nonStop") === "true" ? true : undefined,
-      adults: searchParams.get("adults") ? Number(searchParams.get("adults")) : undefined,
-    };
-
-    // fetch
-    (async () => {
-      try {
-        setLoading(true);
-        setError("");
-        const data = await searchFlights(params);
-        setResults(data);
-      } catch (e) {
-        console.error(e);
-        setError("Failed to load flights");
-      } finally {
-        setLoading(false);
-      }
-    })();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // use hook to manage parsing, fetching and redirect logic
+  const { results, loading, error } = useFlightSearch();
 
   if (loading) return <div className="p-8">Loading flights…</div>;
   if (error) return <div className="p-8 text-red-600">{error}</div>;
@@ -134,13 +31,14 @@ export default function ListSingleTrips() {
         </div>
 
         <div className="space-y-6">
-        {results.flightOffers.map((offer) => {
+        {results.flightOffers.map((offer: FlightOffer) => {
           const itin = offer.itineraries?.[0];
           const segs = itin?.segments ?? [];
-          const firstSeg = segs[0];
-          const lastSeg = segs[segs.length - 1];
-          const stops = itin?.stopTimes ?? [];
-          const airline = firstSeg?.airline ?? firstSeg?.operatingAirline;
+          const { first: firstSeg, last: lastSeg } = getFirstAndLastSegment(offer);
+          const stopsSummary = getStopsSummary(itin);
+          const stops = stopsSummary.details;
+          const airline = getPrimaryAirline(offer);
+          const displayPrice = getDisplayPrice(offer);
 
           return (
             <div key={offer.id} className="bg-white/20 rounded-2xl shadow-md p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 backdrop-blur-sm">
@@ -152,7 +50,7 @@ export default function ListSingleTrips() {
               </div>
 
               <div className="md:w-80 shrink-0 flex flex-col items-start justify-center text-left px-6">
-                <div className="text-sm font-medium text-gray-800">{stops.length > 0 ? `${stops.length} stop${stops.length > 1 ? 's' : ''}` : 'Non-stop'}</div>
+                <div className="text-sm font-medium text-gray-800">{stopsSummary.count > 0 ? `${stopsSummary.count} stop${stopsSummary.count > 1 ? 's' : ''}` : 'Non-stop'}</div>
                 <div className="text-sm text-gray-600 mt-2 leading-relaxed w-full">
                   {stops.length > 0 ? (
                     <div className="space-y-2">
@@ -171,7 +69,7 @@ export default function ListSingleTrips() {
               </div>
 
               <div className="md:w-48 shrink-0 text-right">
-                <div className="text-2xl text-blue-dark font-bold">{offer.priceTotals ? `${offer.priceTotals.currency} ${formatAmount(offer.priceTotals.total)}` : ''}</div>
+                <div className="text-2xl text-blue-dark font-bold">{displayPrice.total ? `${displayPrice.currency ?? ''} ${formatAmount(displayPrice.total)}` : ''}</div>
                 <div className="text-sm text-gray-500 mt-1 font-semibold">TOTAL</div>
                 <div className="text-lg font-medium mt-3">{offer.travelerPricings && offer.travelerPricings[0] && offer.travelerPricings[0].priceTravelerDetails ? `${offer.travelerPricings[0].priceTravelerDetails.currency} ${formatAmount(offer.travelerPricings[0].priceTravelerDetails.total)}` : ''}</div>
                 <div className="text-sm text-gray-500">Per Traveler</div>
