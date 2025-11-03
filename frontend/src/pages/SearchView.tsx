@@ -6,6 +6,7 @@ import AirportAutocomplete from "../components/AirportAutocomplete";
 
 export default function SearchView() {
   const navigate = useNavigate();
+  const todayIso = new Date().toISOString().split("T")[0];
   
   const [formData, setFormData] = useState({
     departureAirport: "",
@@ -44,8 +45,29 @@ export default function SearchView() {
       return;
     }
 
+    // If a return date is present, send the user to the Round Trips fallback for now
+    if (formData.returnDate) {
+      // Ensure returnDate is not before departureDate
+      if (formData.departureDate && formData.returnDate < formData.departureDate) {
+        setError("Return date cannot be before departure date");
+        return;
+      }
+
+      const urlParams = new URLSearchParams();
+      urlParams.set("origin", formData.departureAirport);
+      urlParams.set("destination", formData.arrivalAirport);
+      urlParams.set("departureDate", formData.departureDate);
+      urlParams.set("returnDate", formData.returnDate);
+      if (formData.currency) urlParams.set("currencyCode", formData.currency);
+      if (formData.nonStop) urlParams.set("nonStop", String(formData.nonStop));
+      if (formData.adults) urlParams.set("adults", String(formData.adults));
+
+      navigate(`/round-trips?${urlParams.toString()}`);
+      return;
+    }
+
     setIsLoading(true);
-    
+
     try {
       // Map UI fields to backend DTO parameter names
       const params = {
@@ -59,8 +81,31 @@ export default function SearchView() {
       };
 
       const results = await searchFlights(params);
-      // Navigate to results page or handle the response
-      navigate("/single-trips", { state: { flights: results } });
+      // For deep-linking, build a query string and navigate to /single-trips
+      // The UI displays dates as mm/dd/yyyy in some places; format the date
+      // to mm/dd/yyyy when placing it in the URL so the page can handle it.
+      const toMmDdYyyy = (iso: string | undefined) => {
+        if (!iso) return undefined;
+        if (iso.includes("/")) return iso;
+        // assume ISO yyyy-mm-dd -> convert
+        const parts = iso.split("-");
+        if (parts.length !== 3) return iso;
+        const [y, m, d] = parts;
+        return `${m}/${d}/${y}`;
+      };
+
+      const urlParams = new URLSearchParams();
+      urlParams.set("origin", params.origin);
+      urlParams.set("destination", params.destination);
+      const dep = toMmDdYyyy(params.departureDate);
+      if (dep) urlParams.set("departureDate", dep);
+      const ret = params.returnDate ? toMmDdYyyy(params.returnDate) : undefined;
+      if (ret) urlParams.set("returnDate", ret);
+      if (params.currencyCode) urlParams.set("currencyCode", params.currencyCode);
+      if (params.nonStop) urlParams.set("nonStop", String(params.nonStop));
+      if (params.adults) urlParams.set("adults", String(params.adults));
+
+      navigate(`/single-trips?${urlParams.toString()}`, { state: { flights: results } });
     } catch (err) {
       setError("Failed to search flights. Please try again.");
       console.error("Flight search error:", err);
@@ -74,9 +119,7 @@ export default function SearchView() {
       style={{ backgroundImage: `url(${searchBg})` }}
       className="min-h-screen w-full bg-cover bg-no-repeat bg-bottom bg-white flex flex-col items-center justify-center px-4 py-8"
     >
-		<div className="text-right mb-6">
-          <p className="text-blue-light text-md">Encora Spark | Sara Escamilla</p>
-        </div>
+		
       <div className="w-full max-w-4xl">
         {/* Header */}
         
@@ -119,6 +162,7 @@ export default function SearchView() {
                   name="departureDate"
                   value={formData.departureDate}
                   onChange={handleInputChange}
+                  min={todayIso}
                   className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-light focus:border-transparent"
                   required
                 />
@@ -134,6 +178,7 @@ export default function SearchView() {
                   name="returnDate"
                   value={formData.returnDate}
                   onChange={handleInputChange}
+                  min={formData.departureDate || todayIso}
                   className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-light focus:border-transparent"
                 />
               </div>
