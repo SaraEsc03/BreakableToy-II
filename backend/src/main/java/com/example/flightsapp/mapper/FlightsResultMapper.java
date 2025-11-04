@@ -24,6 +24,8 @@ import java.util.List;
 
 import com.example.flightsapp.utils.FlightTimeUtils;
 import com.example.flightsapp.utils.DurationFormatter;
+import java.time.LocalDateTime;
+import java.time.Duration;
 
 @Component
 public class FlightsResultMapper {
@@ -208,6 +210,27 @@ public class FlightsResultMapper {
                             }
 
                             segOutList.add(seg);
+                        }
+                    }
+
+                    // Compute layovers between consecutive segments inside this itinerary
+                    for (int si = 0; si < segOutList.size() - 1; si++) {
+                        FlightsResultDTO.Segment cur = segOutList.get(si);
+                        FlightsResultDTO.Segment nextSeg = segOutList.get(si + 1);
+                        if (cur.getArrivalDateTime() != null && nextSeg.getDepartureDateTime() != null) {
+                            try {
+                                LocalDateTime a = LocalDateTime.parse(cur.getArrivalDateTime());
+                                LocalDateTime b = LocalDateTime.parse(nextSeg.getDepartureDateTime());
+                                Duration d = Duration.between(a, b);
+                                if (!d.isNegative() && !d.isZero()) {
+                                    String iso = d.toString(); // PT#H#M
+                                    String human = DurationFormatter.formatHuman(iso);
+                                    cur.setNextLayoverIso(iso);
+                                    cur.setNextLayover(human);
+                                }
+                            } catch (Exception ex) {
+                                // ignore parsing errors and leave layover null
+                            }
                         }
                     }
 

@@ -12,6 +12,8 @@ export interface Segment {
 	flightNumber?: string;
 	aircraftType?: string;
 	duration?: string;
+	nextLayover?: string; // human readable, e.g. "1h 20m"
+	nextLayoverIso?: string; // ISO duration, e.g. "PT1H20M"
 }
 export interface Itinerary {
 	initialDepartureDateTime?: string;
