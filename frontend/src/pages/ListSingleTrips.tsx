@@ -31,7 +31,7 @@ export default function ListSingleTrips() {
         </div>
 
         <div className="space-y-6">
-        {results.flightOffers.map((offer: FlightOffer) => {
+  {results.flightOffers.map((offer: FlightOffer) => {
           const itin = offer.itineraries?.[0];
           const segs = itin?.segments ?? [];
           const { first: firstSeg, last: lastSeg } = getFirstAndLastSegment(offer);
@@ -41,12 +41,16 @@ export default function ListSingleTrips() {
           const displayPrice = getDisplayPrice(offer);
 
           return (
-            <div key={offer.id} className="bg-white/20 rounded-2xl shadow-md p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 backdrop-blur-sm">
+            <div key={offer.id} onClick={() => navigate(`/details/${offer.id}`, { state: { offer } })} className="bg-white/20 rounded-2xl shadow-md p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 backdrop-blur-sm cursor-pointer">
               <div className="flex-1 pr-4">
                 <div className="font-semibold text-lg text-blue-dark">{formatTimeShort(itin?.initialDepartureDateTime)} - {formatTimeShort(itin?.finalArrivalDateTime)}</div>
                 <div className="text-sm text-gray-700 mt-1">{firstSeg?.departureAirport?.name ?? ""} ({firstSeg?.departureAirport?.code ?? ""}) - {lastSeg?.arrivalAirport?.name ?? ""} ({lastSeg?.arrivalAirport?.code ?? ""})</div>
                 <div className="text-sm text-gray-600 mt-3">{itin?.totalDuration ?? ''}</div>
                 <div className="text-sm text-gray-700 mt-6">{airline ? <span className="text-blue-dark">{airline.name} ({airline.code})</span> : ''}</div>
+                {/* show operating carrier when it's different from the marketing airline */}
+                {firstSeg?.operatingAirline?.code && firstSeg?.operatingAirline?.code !== firstSeg?.airline?.code ? (
+                  <div className="mt-1 text-sm text-gray-600">Operated by: {firstSeg.operatingAirline.code} · {firstSeg.operatingAirline.name}</div>
+                ) : null}
               </div>
 
               <div className="md:w-80 shrink-0 flex flex-col items-start justify-center text-left px-6">
