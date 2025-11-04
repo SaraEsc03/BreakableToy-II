@@ -83,13 +83,15 @@ class FlightsResultMapperTest {
         assertThat(outTp.getPriceTravelerDetails().getTotal()).isEqualTo("100.00");
         assertThat(outTp.getPriceTravelerDetails().getBase()).isEqualTo("80.00");
 
-        // Fare details (representative first item)
-        assertThat(outTp.getFareDetailsBySegment()).isNotNull();
-        assertThat(outTp.getFareDetailsBySegment().getSegmentId()).isEqualTo("s1");
-        assertThat(outTp.getFareDetailsBySegment().getCabin()).isEqualTo("ECONOMY");
-        assertThat(outTp.getFareDetailsBySegment().getClassTrip()).isEqualTo("Y");
-        assertThat(outTp.getFareDetailsBySegment().getAmenities()).hasSize(1);
-        assertThat(outTp.getFareDetailsBySegment().getAmenities().get(0).getDescription()).isEqualTo("Seat selection");
+    // Fare details: mapper now returns a list of fare details (one per segment)
+    assertThat(outTp.getFareDetailsBySegment()).isNotNull();
+    assertThat(outTp.getFareDetailsBySegment()).hasSize(1);
+    FlightsResultDTO.FareDetails outFare = outTp.getFareDetailsBySegment().get(0);
+    assertThat(outFare.getSegmentId()).isEqualTo("s1");
+    assertThat(outFare.getCabin()).isEqualTo("ECONOMY");
+    assertThat(outFare.getClassTrip()).isEqualTo("Y");
+    assertThat(outFare.getAmenities()).hasSize(1);
+    assertThat(outFare.getAmenities().get(0).getDescription()).isEqualTo("Seat selection");
 
         // Itinerary basics
         assertThat(outOffer.getItineraries()).hasSize(1);

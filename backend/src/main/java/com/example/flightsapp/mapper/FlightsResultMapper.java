@@ -111,26 +111,33 @@ public class FlightsResultMapper {
                         tpOut.setPriceTravelerDetails(outPtd);
                     }
 
-                    // fare details by segment: DTO expects a single FareDetails; pick first if available
+                    // fare details by segment: map ALL fare details so the frontend
+                    // can show per-segment cabins/classes/amenities.
                     FareDetailsDTO[] fares = tpSrc.getFareDetailsBySegment();
-                    if (fares != null && fares.length > 0 && fares[0] != null) {
-                        FareDetailsDTO fd0 = fares[0];
-                        FlightsResultDTO.FareDetails outFare = new FlightsResultDTO.FareDetails();
-                        outFare.setSegmentId(fd0.getSegmentId());
-                        outFare.setCabin(fd0.getCabin());
-                        outFare.setClassTrip(fd0.getClassTrip());
-                        if (fd0.getAmenities() != null) {
-                            List<FlightsResultDTO.Amenities> amList = new ArrayList<>();
-                            for (AmenitiesDTO a : fd0.getAmenities()) {
-                                if (a == null) continue;
-                                FlightsResultDTO.Amenities outAmenity = new FlightsResultDTO.Amenities();
-                                outAmenity.setDescription(a.getDescription());
-                                outAmenity.setIsChargeable(a.getIsChargeable());
-                                amList.add(outAmenity);
+                    if (fares != null && fares.length > 0) {
+                        List<FlightsResultDTO.FareDetails> outFares = new ArrayList<>();
+                        for (FareDetailsDTO fd : fares) {
+                            if (fd == null) continue;
+                            FlightsResultDTO.FareDetails outFare = new FlightsResultDTO.FareDetails();
+                            outFare.setSegmentId(fd.getSegmentId());
+                            outFare.setCabin(fd.getCabin());
+                            outFare.setClassTrip(fd.getClassTrip());
+
+                            if (fd.getAmenities() != null) {
+                                List<FlightsResultDTO.Amenities> amList = new ArrayList<>();
+                                for (AmenitiesDTO a : fd.getAmenities()) {
+                                    if (a == null) continue;
+                                    FlightsResultDTO.Amenities outAmenity = new FlightsResultDTO.Amenities();
+                                    outAmenity.setDescription(a.getDescription());
+                                    outAmenity.setIsChargeable(a.getIsChargeable());
+                                    amList.add(outAmenity);
+                                }
+                                outFare.setAmenities(amList);
                             }
-                            outFare.setAmenities(amList);
+
+                            outFares.add(outFare);
                         }
-                        tpOut.setFareDetailsBySegment(outFare);
+                        tpOut.setFareDetailsBySegment(outFares);
                     }
 
                     tpList.add(tpOut);
