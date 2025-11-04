@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import useFlightSearch from "../hooks/useFlightSearch";
 import listBg from "../assets/imgs/listBg.svg";
-import { formatTimeShort } from "../utils/formatters/date";
+import { formatTimeShort, formatDateShort } from "../utils/formatters/date";
 import { formatAmount } from "../utils/formatters/number";
 import { getFirstAndLastSegment, getPrimaryAirline, getStopsSummary, getDisplayPrice } from "../utils/flightSelectors";
 import type { FlightOffer } from "../types/flight";
@@ -43,7 +43,7 @@ export default function ListSingleTrips() {
           return (
             <div key={offer.id} onClick={() => navigate(`/details/${offer.id}`, { state: { offer } })} className="bg-white/20 rounded-2xl shadow-md p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 backdrop-blur-sm cursor-pointer">
               <div className="flex-1 pr-4">
-                <div className="font-semibold text-lg text-blue-dark">{formatTimeShort(itin?.initialDepartureDateTime)} - {formatTimeShort(itin?.finalArrivalDateTime)}</div>
+                <div className="font-semibold text-lg text-blue-dark">{formatDateShort(itin?.initialDepartureDateTime)} {formatTimeShort(itin?.initialDepartureDateTime)} - {formatDateShort(itin?.finalArrivalDateTime)} {formatTimeShort(itin?.finalArrivalDateTime)}</div>
                 <div className="text-sm text-gray-700 mt-1">{firstSeg?.departureAirport?.name ?? ""} ({firstSeg?.departureAirport?.code ?? ""}) - {lastSeg?.arrivalAirport?.name ?? ""} ({lastSeg?.arrivalAirport?.code ?? ""})</div>
                 <div className="text-sm text-gray-600 mt-3">{itin?.totalDuration ?? ''}</div>
                 <div className="text-sm text-gray-700 mt-6">{airline ? <span className="text-blue-dark">{airline.name} ({airline.code})</span> : ''}</div>

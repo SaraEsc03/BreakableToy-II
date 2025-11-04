@@ -1,8 +1,7 @@
 import axios from "axios";
 
-// Backend exposes the v1 endpoint used in tests:
-// GET /api/v1/airports/search?q=<term>&limit=<n>
-const API_URL = "http://localhost:8080/api/v1/airports/search";
+// Allow runtime configuration via Vite env. Use full endpoint URL or fallback to localhost.
+const API_URL = import.meta.env.VITE_AIRPORT_API_URL 
 
 /**
  * Query backend airport autocomplete.

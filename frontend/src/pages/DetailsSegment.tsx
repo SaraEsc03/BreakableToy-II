@@ -4,7 +4,7 @@ import { formatDateTime, formatDateShort } from "../utils/formatters/date";
 import { formatAmount } from "../utils/formatters/number";
 import type { TravelerPricing, PriceTotals } from "../types/flight";
 import useOffer from "../hooks/useOffer";
-import useRepresentativeFare from "../hooks/useRepresentativeFare";
+import { representativeFareForSegment } from "../utils/representativeFare";
 import { flattenSegments, isOperatingDifferent } from "../utils/segmentUtils";
 
 export default function DetailsSegment() {
@@ -14,7 +14,6 @@ export default function DetailsSegment() {
 	// derive lightweight values and call hooks unconditionally
 	const priceTotals: PriceTotals | undefined = offer?.priceTotals;
 	const travelerPricings: TravelerPricing[] = offer?.travelerPricings ?? [];
-	const { representativeForSegment } = useRepresentativeFare(travelerPricings);
 	const segments = flattenSegments(offer);
 
 	if (!offer) {
@@ -39,10 +38,10 @@ export default function DetailsSegment() {
 					<div className="space-y-6">
 						{segments.map((entry, i) => {
 							const { seg } = entry;
-							const fare = representativeForSegment(seg.id);
+							const fare = representativeFareForSegment(travelerPricings, seg.id);
 							const operatingDifferent = isOperatingDifferent(seg);
 							return (
-								<article key={`segment-${seg.id ?? i}`} className="border-yellow-sun border-1 rounded-lg p-4">
+								<article key={`segment-${seg.id ?? i}`} className="border-yellow-sun border rounded-lg p-4">
 									<div className="flex items-start justify-between">
 										<div>
 											<div className="text-sm text-gray-500">{formatDateShort(seg.departureDateTime)}</div>
@@ -104,7 +103,7 @@ export default function DetailsSegment() {
 
 						<div className="mt-4 font-bold text-lg">Total: {priceTotals?.currency ? `${priceTotals.currency} ${formatAmount(priceTotals.grandTotal ?? priceTotals.total)}` : '-'}</div>
 
-						<div className="mt-6 border rounded-lg p-4 border-yellow-sun border-1">
+						<div className="mt-6 border rounded-lg p-4 border-yellow-sun">
 							<div className="font-semibold">Per Traveler</div>
 							<div className="mt-2 text-sm text-gray-700">
 								{travelerPricings.length > 0 ? (

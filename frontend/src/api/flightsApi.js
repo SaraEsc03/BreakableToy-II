@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:8080/api/v1/flights"; // Spring Boot default port
+// Use Vite env var when available; fallback to localhost
+const API_URL = import.meta.env.VITE_FLIGHT_API_URL
 
 export const searchFlights = async (params) => {
   const response = await axios.get(`${API_URL}/search`, { params });

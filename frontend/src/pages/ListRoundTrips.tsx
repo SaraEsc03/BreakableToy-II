@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import useRoundTripSearch from "../hooks/useRoundTripSearch";
 import listBg from "../assets/imgs/listBg.svg";
-import { formatTimeShort } from "../utils/formatters/date";
+import { formatTimeShort, formatDateShort } from "../utils/formatters/date";
 import { formatAmount } from "../utils/formatters/number";
 import { getFirstAndLastSegment, getStopsSummary, getDisplayPrice } from "../utils/flightSelectors";
 import type { FlightOffer } from "../types/flight";
@@ -52,7 +52,7 @@ export default function ListRoundTrips() {
             return (
               <div key={offer.id} onClick={() => navigate(`/details/${offer.id}`, { state: { offer } })} className="bg-white/20 rounded-2xl shadow-md p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 backdrop-blur-sm cursor-pointer">
                 <div className="flex-1 pr-4">
-                  <div className="font-semibold text-lg text-blue-dark">{formatTimeShort(outbound?.initialDepartureDateTime)} - {formatTimeShort(outbound?.finalArrivalDateTime)}</div>
+                  <div className="font-semibold text-lg text-blue-dark">{formatDateShort(outbound?.initialDepartureDateTime)} {formatTimeShort(outbound?.initialDepartureDateTime)} - {formatDateShort(outbound?.finalArrivalDateTime)} {formatTimeShort(outbound?.finalArrivalDateTime)}</div>
                   <div className="text-sm text-gray-700 mt-1">{outFirst?.departureAirport?.name ?? ''} ({outFirst?.departureAirport?.code ?? ''}) - {outLast?.arrivalAirport?.name ?? ''} ({outLast?.arrivalAirport?.code ?? ''})</div>
                   <div className="text-sm text-gray-600 mt-3">{outbound?.totalDuration ?? ''}</div>
                   <div className="text-sm text-gray-700 mt-6">{airlineOut ? <span className="text-blue-dark">{airlineOut.name} ({airlineOut.code})</span> : ''}</div>
@@ -62,7 +62,7 @@ export default function ListRoundTrips() {
 
                   {inbound ? (
                     <div className="mt-4 border-t pt-4">
-                      <div className="font-semibold text-lg text-blue-dark">Return: {formatTimeShort(inbound?.initialDepartureDateTime)} - {formatTimeShort(inbound?.finalArrivalDateTime)}</div>
+                      <div className="font-semibold text-lg text-blue-dark">{formatDateShort(inbound?.initialDepartureDateTime)} {formatTimeShort(inbound?.initialDepartureDateTime)} - {formatDateShort(inbound?.finalArrivalDateTime)} {formatTimeShort(inbound?.finalArrivalDateTime)}</div>
                       <div className="text-sm text-gray-700 mt-1">{inFirst?.departureAirport?.name ?? ''} ({inFirst?.departureAirport?.code ?? ''}) - {inLast?.arrivalAirport?.name ?? ''} ({inLast?.arrivalAirport?.code ?? ''})</div>
                       <div className="text-sm text-gray-600 mt-3">{inbound?.totalDuration ?? ''}</div>
                       <div className="text-sm text-gray-700 mt-6">{airlineIn ? <span className="text-blue-dark">{airlineIn.name} ({airlineIn.code})</span> : ''}</div>
