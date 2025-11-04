@@ -1,9 +1,7 @@
 package com.example.flightsapp.utils;
 
-import com.example.flightsapp.FlightsResultDTO;
+import com.example.flightsapp.dtos.output.flights.FlightsResultDTO;
 import com.example.flightsapp.dtos.output.flights.SegmentDTO;
-
-import com.example.flightsapp.utils.DurationFormatter;
 
 import java.time.Duration;
 import java.time.LocalDateTime;

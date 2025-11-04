@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #f2f1f1;
+  --color-blue-dark: #002751;
+  --color-blue-light: #688dc2;
+}
+
+/* Custom font utilities */
+@layer utilities {
+  .font-helvetica-light {
+    font-family: 'Helvetica', Arial, sans-serif;
+    font-weight: 300;
+    font-style: normal;
+  }
+  
+  .font-helvetica-regular {
+    font-family: 'Helvetica', Arial, sans-serif;
+    font-weight: 400;
+    font-style: normal;
+  }
+  
+  .font-helvetica-bold {
+    font-family: 'Helvetica', Arial, sans-serif;
+    font-weight: 700;
+    font-style: normal;
+  }
+  
+  .font-helvetica-bold-italic {
+    font-family: 'Helvetica', Arial, sans-serif;
+    font-weight: 700;
+    font-style: italic;
+  }
+}
+
+button {
+  cursor: pointer;
+}
+
+.bg-cover {
+  background-size: cover;
+  background-position: center;
+}

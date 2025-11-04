@@ -7,7 +7,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import com.example.flightsapp.FlightsResultDTO;
+import com.example.flightsapp.dtos.output.flights.FlightsResultDTO;
 import com.example.flightsapp.dtos.output.flights.AirportTravelingsInfoDTO;
 import com.example.flightsapp.dtos.output.flights.SegmentDTO;
 
