@@ -1,62 +1,30 @@
-import { useMemo } from "react";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import listBg from "../assets/imgs/listBg.svg";
 import { formatDateTime, formatDateShort } from "../utils/formatters/date";
 import { formatAmount } from "../utils/formatters/number";
-import { useFlights } from "../context/FlightsContext";
-import type { FlightOffer, Segment, TravelerPricing, FareDetails, PriceTotals } from "../types/flight";
+import type { TravelerPricing, PriceTotals } from "../types/flight";
+import useOffer from "../hooks/useOffer";
+import useRepresentativeFare from "../hooks/useRepresentativeFare";
+import { flattenSegments, isOperatingDifferent } from "../utils/segmentUtils";
 
 export default function DetailsSegment() {
 	const navigate = useNavigate();
-	const { id } = useParams();
-	const location = useLocation();
-	const { flights } = useFlights();
+	const { offer } = useOffer();
 
-	// Resolve offer either from location.state (navigation) or from context
-	const offer: FlightOffer | undefined = useMemo(() => {
-		const state = (location as unknown as { state?: unknown }).state as unknown as { offer?: FlightOffer; flights?: unknown } | undefined;
-		if (state?.offer) return state.offer;
-		if (state?.flights) {
-			const maybe = state.flights;
-			if (Array.isArray(maybe)) return maybe.find((o: FlightOffer) => String(o.id) === String(id));
-			const maybeObj = maybe as { flightOffers?: FlightOffer[] };
-			if (maybeObj.flightOffers && Array.isArray(maybeObj.flightOffers)) return maybeObj.flightOffers.find((o: FlightOffer) => String(o.id) === String(id));
-		}
-		if (Array.isArray(flights)) return flights.find((f: FlightOffer) => String(f.id) === String(id));
-		return undefined;
-	}, [location, flights, id]);
+	// derive lightweight values and call hooks unconditionally
+	const priceTotals: PriceTotals | undefined = offer?.priceTotals;
+	const travelerPricings: TravelerPricing[] = offer?.travelerPricings ?? [];
+	const { representativeForSegment } = useRepresentativeFare(travelerPricings);
+	const segments = flattenSegments(offer);
 
 	if (!offer) {
 		return (
 			<div className="p-8">
-				<button onClick={() => navigate(-1)} className="px-4 py-2 bg-blue-dark text-white rounded-md">&lt; Return to Flights</button>
+				<button onClick={() => navigate(-1)} className="px-4 py-2 bg-blue-dark text-white rounded-md hover:bg-blue-light transition-colors">&lt; Return to Flights</button>
 				<div className="mt-6">Could not find flight details for this selection.</div>
 			</div>
 		);
 	}
-
-	const priceTotals: PriceTotals | undefined = offer.priceTotals;
-	const travelerPricings: TravelerPricing[] = offer.travelerPricings ?? [];
-
-	// Helper: get the representative fare details for a segment.
-	// We pick the first traveler's matching FareDetails (common case: same for all travelers).
-	function representativeFareForSegment(segmentId?: string): FareDetails | undefined {
-		if (!segmentId) return undefined;
-		if (travelerPricings.length === 0) return undefined;
-		const firstTraveler = travelerPricings[0];
-		const fares = firstTraveler.fareDetailsBySegment;
-		if (!fares) return undefined;
-		// fares may be an array; find the one matching this segmentId
-		if (Array.isArray(fares)) return fares.find(f => String(f.segmentId) === String(segmentId));
-		// defensive: if shape is singular
-		return (fares as unknown as FareDetails).segmentId === segmentId ? (fares as unknown as FareDetails) : undefined;
-	}
-
-	// Flatten all segments across itineraries preserving order
-	const segments: { seg: Segment; itineraryIndex: number; segmentIndex: number }[] = [];
-	(offer.itineraries ?? []).forEach((iti, itiIdx) => {
-		(iti.segments ?? []).forEach((s, segIdx) => segments.push({ seg: s, itineraryIndex: itiIdx, segmentIndex: segIdx }));
-	});
 
 	// Layover now provided by backend in segment.nextLayover (human) and nextLayoverIso (ISO)
 
@@ -71,10 +39,10 @@ export default function DetailsSegment() {
 					<div className="space-y-6">
 						{segments.map((entry, i) => {
 							const { seg } = entry;
-							const fare = representativeFareForSegment(seg.id);
-							const operatingDifferent = seg.operatingAirline && seg.operatingAirline.code && seg.operatingAirline.code !== seg.airline?.code;
+							const fare = representativeForSegment(seg.id);
+							const operatingDifferent = isOperatingDifferent(seg);
 							return (
-								<article key={`segment-${seg.id ?? i}`} className="border rounded-lg p-4">
+								<article key={`segment-${seg.id ?? i}`} className="border-yellow-sun border-1 rounded-lg p-4">
 									<div className="flex items-start justify-between">
 										<div>
 											<div className="text-sm text-gray-500">{formatDateShort(seg.departureDateTime)}</div>
@@ -84,7 +52,7 @@ export default function DetailsSegment() {
 										<div className="text-right">
 											<div className="font-medium">{seg.airline?.code ?? ''} · {seg.airline?.name ?? ''}</div>
 											<div className="text-sm text-gray-600">{seg.flightNumber ? `Flight ${seg.flightNumber}` : ''}</div>
-											<div className="text-xs text-gray-500">{seg.aircraftType ?? ''}</div>
+											<div className="text-xs text-gray-500">Aircraft {seg.aircraftType ?? ''}</div>
 										</div>
 									</div>
 
@@ -93,7 +61,7 @@ export default function DetailsSegment() {
 									) : null}
 
 									<div className="mt-4">
-										<div className="font-semibold">Fare Details</div>
+										<div className="font-semibold text-lg text-blue-dark">Fare Details</div>
 										{fare ? (
 											<div className="mt-2 text-sm text-gray-700">
 												<div>Cabin: {fare.cabin ?? '—'}</div>
@@ -120,10 +88,10 @@ export default function DetailsSegment() {
 				</div>
 
 				<aside className="col-span-1">
-					<div className="bg-white rounded-2xl p-6 shadow-md">
-						<div className="font-semibold text-xl text-blue-dark">Price Breakdown</div>
+					<div className="bg-white  rounded-2xl p-6 shadow-md">
+						<div className="font-bold text-3xl text-blue-dark">PRICE BREAKDOWN</div>
 						<div className="mt-4 text-sm text-gray-700">Base: {priceTotals?.currency ? `${priceTotals.currency} ${formatAmount(priceTotals.base)}` : '-'}</div>
-						<div className="text-sm text-gray-700 mt-2">Fees</div>
+						<div className="text-sm font-semibold text-gray-700 mt-2">Fees</div>
 						<div className="text-sm text-gray-600 mt-1">
 							{priceTotals?.fees && priceTotals.fees.length > 0 ? (
 								priceTotals.fees.map((f, idx) => (
@@ -136,7 +104,7 @@ export default function DetailsSegment() {
 
 						<div className="mt-4 font-bold text-lg">Total: {priceTotals?.currency ? `${priceTotals.currency} ${formatAmount(priceTotals.grandTotal ?? priceTotals.total)}` : '-'}</div>
 
-						<div className="mt-6 border rounded-lg p-4">
+						<div className="mt-6 border rounded-lg p-4 border-yellow-sun border-1">
 							<div className="font-semibold">Per Traveler</div>
 							<div className="mt-2 text-sm text-gray-700">
 								{travelerPricings.length > 0 ? (

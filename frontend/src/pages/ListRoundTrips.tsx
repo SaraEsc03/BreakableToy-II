@@ -46,6 +46,9 @@ export default function ListRoundTrips() {
 
             const displayPrice = getDisplayPrice(offer);
 
+            const operatingOutDifferent = outFirst?.operatingAirline?.code && outFirst?.operatingAirline?.code !== outFirst?.airline?.code;
+            const operatingInDifferent = inFirst?.operatingAirline?.code && inFirst?.operatingAirline?.code !== inFirst?.airline?.code;
+
             return (
               <div key={offer.id} onClick={() => navigate(`/details/${offer.id}`, { state: { offer } })} className="bg-white/20 rounded-2xl shadow-md p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 backdrop-blur-sm cursor-pointer">
                 <div className="flex-1 pr-4">
@@ -53,6 +56,9 @@ export default function ListRoundTrips() {
                   <div className="text-sm text-gray-700 mt-1">{outFirst?.departureAirport?.name ?? ''} ({outFirst?.departureAirport?.code ?? ''}) - {outLast?.arrivalAirport?.name ?? ''} ({outLast?.arrivalAirport?.code ?? ''})</div>
                   <div className="text-sm text-gray-600 mt-3">{outbound?.totalDuration ?? ''}</div>
                   <div className="text-sm text-gray-700 mt-6">{airlineOut ? <span className="text-blue-dark">{airlineOut.name} ({airlineOut.code})</span> : ''}</div>
+                  {operatingOutDifferent ? (
+                    <div className="mt-1 text-sm text-gray-600">Operated by: {outFirst?.operatingAirline?.code} · {outFirst?.operatingAirline?.name}</div>
+                  ) : null}
 
                   {inbound ? (
                     <div className="mt-4 border-t pt-4">
@@ -60,6 +66,9 @@ export default function ListRoundTrips() {
                       <div className="text-sm text-gray-700 mt-1">{inFirst?.departureAirport?.name ?? ''} ({inFirst?.departureAirport?.code ?? ''}) - {inLast?.arrivalAirport?.name ?? ''} ({inLast?.arrivalAirport?.code ?? ''})</div>
                       <div className="text-sm text-gray-600 mt-3">{inbound?.totalDuration ?? ''}</div>
                       <div className="text-sm text-gray-700 mt-6">{airlineIn ? <span className="text-blue-dark">{airlineIn.name} ({airlineIn.code})</span> : ''}</div>
+                      {operatingInDifferent ? (
+                        <div className="mt-1 text-sm text-gray-600">Operated by: {inFirst?.operatingAirline?.code} · {inFirst?.operatingAirline?.name}</div>
+                      ) : null}
                     </div>
                   ) : null}
                 </div>

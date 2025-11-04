@@ -47,6 +47,10 @@ export default function ListSingleTrips() {
                 <div className="text-sm text-gray-700 mt-1">{firstSeg?.departureAirport?.name ?? ""} ({firstSeg?.departureAirport?.code ?? ""}) - {lastSeg?.arrivalAirport?.name ?? ""} ({lastSeg?.arrivalAirport?.code ?? ""})</div>
                 <div className="text-sm text-gray-600 mt-3">{itin?.totalDuration ?? ''}</div>
                 <div className="text-sm text-gray-700 mt-6">{airline ? <span className="text-blue-dark">{airline.name} ({airline.code})</span> : ''}</div>
+                {/* show operating carrier when it's different from the marketing airline */}
+                {firstSeg?.operatingAirline?.code && firstSeg?.operatingAirline?.code !== firstSeg?.airline?.code ? (
+                  <div className="mt-1 text-sm text-gray-600">Operated by: {firstSeg.operatingAirline.code} · {firstSeg.operatingAirline.name}</div>
+                ) : null}
               </div>
 
               <div className="md:w-80 shrink-0 flex flex-col items-start justify-center text-left px-6">

@@ -52,8 +52,8 @@ public class FlightsResultDTO {
         private String flightNumber;
         private String aircraftType;
         private String duration;
-        private String nextLayover; // human readable, e.g. "1h 20m"
-        private String nextLayoverIso; // ISO duration, e.g. "PT1H20M"
+        private String nextLayover; 
+        private String nextLayoverIso; 
     }
 
     @Getter
