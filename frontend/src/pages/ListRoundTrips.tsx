@@ -47,7 +47,7 @@ export default function ListRoundTrips() {
             const displayPrice = getDisplayPrice(offer);
 
             return (
-              <div key={offer.id} className="bg-white/20 rounded-2xl shadow-md p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 backdrop-blur-sm">
+              <div key={offer.id} onClick={() => navigate(`/details/${offer.id}`, { state: { offer } })} className="bg-white/20 rounded-2xl shadow-md p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 backdrop-blur-sm cursor-pointer">
                 <div className="flex-1 pr-4">
                   <div className="font-semibold text-lg text-blue-dark">{formatTimeShort(outbound?.initialDepartureDateTime)} - {formatTimeShort(outbound?.finalArrivalDateTime)}</div>
                   <div className="text-sm text-gray-700 mt-1">{outFirst?.departureAirport?.name ?? ''} ({outFirst?.departureAirport?.code ?? ''}) - {outLast?.arrivalAirport?.name ?? ''} ({outLast?.arrivalAirport?.code ?? ''})</div>
