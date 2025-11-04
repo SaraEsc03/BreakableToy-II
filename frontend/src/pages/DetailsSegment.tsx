@@ -50,7 +50,7 @@ export default function DetailsSegment() {
 	const travelerPricings = offer.travelerPricings ?? [];
 
 		// Local helper types for unknown shapes in DTO
-		type FareDetails = { cabin?: string; classTrip?: string; amenities?: { description?: string; isChargeable?: boolean }[] };
+		type FareDetails = { segmentId?: string; cabin?: string; classTrip?: string; amenities?: { description?: string; isChargeable?: boolean }[] };
 
 		// Helper to render stops details from itinerary
 	function renderStops(itin?: Itinerary, segs: Segment[] = []) {
@@ -156,39 +156,83 @@ export default function DetailsSegment() {
 						</div>
 
 						{/* Placeholder for additional info or selected segment details */}
-						<div className="border rounded-lg p-4">
-							<div className="font-semibold">Segment Details</div>
-											<div className="text-sm text-gray-700 mt-2">
-												{/* Show outbound segments */}
-												{outboundSegs.map((s, i) => {
-													const segExtra = s as unknown as { id?: string; flightNumber?: string; aircraftType?: string; duration?: string };
-													return (
-														<div key={`out-${i}`} className="mb-3">
-															<div className="font-medium">{s.airline?.name ?? s.operatingAirline?.name} {segExtra.flightNumber ? `(${segExtra.flightNumber})` : ''}</div>
-															<div className="text-xs text-gray-500">{formatDateTime(s.departureDateTime)} → {formatDateTime(s.arrivalDateTime)}{segExtra.aircraftType ? ` · ${segExtra.aircraftType}` : ''}</div>
-															<div className="text-xs text-gray-500">{segExtra.duration ? `${segExtra.duration}` : ''}</div>
-														</div>
-													);
-												})}
+								<div className="space-y-4">
+									{/* Render each segment as its own card, ordered by departure datetime */}
+									{(() => {
+										// Combine segments from outbound and inbound into one list preserving itinerary order
+										const combined: Segment[] = [];
+										if (outboundSegs.length > 0) combined.push(...outboundSegs);
+										if (inboundSegs.length > 0) combined.push(...inboundSegs);
+										// sort by departureDateTime to ensure chronological order
+										combined.sort((a, b) => {
+											const da = a.departureDateTime ? new Date(a.departureDateTime).getTime() : 0;
+											const db = b.departureDateTime ? new Date(b.departureDateTime).getTime() : 0;
+											return da - db;
+										});
 
-												{/* Show inbound segments if present */}
-												{inboundSegs.length > 0 && (
-													<div className="mt-4">
-														<div className="font-medium text-sm text-gray-800">Return segments</div>
-														{inboundSegs.map((s, i) => {
-															const segExtra = s as unknown as { id?: string; flightNumber?: string; aircraftType?: string; duration?: string };
-															return (
-																<div key={`in-${i}`} className="mb-3">
-																	<div className="font-medium">{s.airline?.name ?? s.operatingAirline?.name} {segExtra.flightNumber ? `(${segExtra.flightNumber})` : ''}</div>
-																	<div className="text-xs text-gray-500">{formatDateTime(s.departureDateTime)} → {formatDateTime(s.arrivalDateTime)}{segExtra.aircraftType ? ` · ${segExtra.aircraftType}` : ''}</div>
-															<div className="text-xs text-gray-500">{segExtra.duration ? `${segExtra.duration}` : ''}</div>
-																</div>
-															);
-														})}
+										// Helper: get fare details for a segment by matching segmentId
+										function faresForSegment(segmentId?: string) {
+											if (!segmentId) return [] as { travelerIndex: number; fare?: FareDetails }[];
+											return travelerPricings.map((tp, idx) => {
+												const fare = tp.fareDetailsBySegment as unknown as FareDetails | undefined;
+												if (fare && String(fare.segmentId) === String(segmentId)) return { travelerIndex: idx, fare };
+												return { travelerIndex: idx, fare: undefined };
+											}).filter(x => x.fare !== undefined);
+										}
+
+										// Helper: format layover between this and next segment
+										function layoverBetween(current: Segment, next?: Segment) {
+											if (!next || !current || !current.arrivalDateTime || !next.departureDateTime) return null;
+											const a = new Date(current.arrivalDateTime).getTime();
+											const b = new Date(next.departureDateTime).getTime();
+											const diff = b - a;
+											if (isNaN(diff) || diff <= 0) return null;
+											const mins = Math.floor(diff / 60000);
+											const h = Math.floor(mins / 60);
+											const m = mins % 60;
+											return `${h > 0 ? `${h}h ` : ''}${m}m`;
+										}
+
+										return combined.map((seg, idx) => {
+											const segExtra = seg as unknown as { id?: string; flightNumber?: string; aircraftType?: string; duration?: string };
+											const fares = faresForSegment(segExtra.id);
+											const next = combined[idx + 1];
+											const layover = layoverBetween(seg, next);
+											return (
+												<div key={`seg-${idx}`} className="border rounded-lg p-4">
+													<div className="font-medium text-blue-dark">{seg.airline?.name ?? seg.operatingAirline?.name} {seg.airline?.code ?? seg.operatingAirline?.code} {segExtra.flightNumber ? `· ${segExtra.flightNumber}` : ''}</div>
+													<div className="text-xs text-gray-500">{formatDateTime(seg.departureDateTime)} → {formatDateTime(seg.arrivalDateTime)}{segExtra.aircraftType ? ` · ${segExtra.aircraftType}` : ''}</div>
+													<div className="mt-3 text-sm text-gray-700">
+														{/* Traveler fare details for this segment */}
+														{fares.length > 0 ? (
+															fares.map(f => (
+																<div key={f.travelerIndex} className="mb-2">
+																<div className="font-medium">Traveler {f.travelerIndex + 1}</div>
+																<div className="text-sm">Cabin: {f.fare?.cabin ?? '—'}</div>
+																<div className="text-sm">Class: {f.fare?.classTrip ?? '—'}</div>
+																{/* amenities */}
+																{f.fare?.amenities && f.fare.amenities.length > 0 ? (
+																	<div className="mt-2 space-y-1 text-sm text-gray-700">
+																	{f.fare.amenities.map((a, i) => (
+																		<div key={i}>
+																			<div className="font-medium">{a.description}</div>
+																			<div className="text-xs text-gray-500">{a.isChargeable ? '(chargeable)' : '(not chargeable)'}</div>
+																		</div>
+																	))}
+																	</div>
+																) : null}
+														</div>
+														))
+														) : (
+														<div className="text-sm text-gray-500">No fare details for this segment</div>
+														)}
 													</div>
-												)}
-											</div>
-						</div>
+													{layover ? <div className="mt-3 text-sm text-gray-500">Layover: {layover}</div> : null}
+												</div>
+											);
+										});
+									})()}
+								</div>
 					</div>
 				</div>
 
