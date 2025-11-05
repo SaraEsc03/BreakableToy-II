@@ -2,15 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { SearchFormValues, SearchApiParams } from "../types/search";
 import { useFlights } from "../context/useFlights";
-
-function toMmDdYyyy(iso?: string) {
-  if (!iso) return undefined;
-  if (iso.includes("/")) return iso;
-  const parts = iso.split("-");
-  if (parts.length !== 3) return iso;
-  const [y, m, d] = parts;
-  return `${m}/${d}/${y}`;
-}
+import { toMmDdYyyy } from "../utils/formatters/date";
 
 export default function useSubmitSearch() {
   const navigate = useNavigate();

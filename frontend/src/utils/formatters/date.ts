@@ -6,6 +6,15 @@ export function toIsoDate(mmddyyyy: string | null): string | null {
   return `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
 }
 
+export function toMmDdYyyy(iso?: string): string | undefined {
+  if (!iso) return undefined;
+  if (iso.includes("/")) return iso;
+  const parts = iso.split("-");
+  if (parts.length !== 3) return iso;
+  const [y, m, d] = parts;
+  return `${m}/${d}/${y}`;
+}
+
 export function formatTimeShort(iso?: string) {
   if (!iso) return "";
   const d = new Date(iso);
