@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import { searchFlights } from "../api/flightsApi";
 import type { FlightsResult } from "../types/flight";
@@ -25,6 +25,8 @@ export default function useFlightResults(opts: UseFlightResultsOptions = {}) {
 
   const searchString = searchParams.toString();
 
+  const abortRef = useRef<AbortController | null>(null);
+
   const refetch = useCallback(async (): Promise<void> => {
     const parsed = parseSearchParams(searchString);
     if (parsed.mode === "none" || !parsed.apiParams) return;
@@ -35,19 +37,38 @@ export default function useFlightResults(opts: UseFlightResultsOptions = {}) {
       return;
     }
 
+    // abort any previous request
+    abortRef.current?.abort();
+
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     try {
       setLoading(true);
       setError(null);
-      const data = await searchFlights(parsed.apiParams as SearchApiParams);
-      setResults(data);
-      if (preferContext) {
-        setFlights(data.flightOffers ?? []);
+      const data = await searchFlights(parsed.apiParams as SearchApiParams, { signal: controller.signal });
+      // only update state if request was not aborted
+      if (!controller.signal.aborted) {
+        setResults(data);
+        if (preferContext) {
+          setFlights(data.flightOffers ?? []);
+        }
       }
-    } catch (e) {
-      console.error(e);
-      setError("Failed to load flights");
+    } catch (e: unknown) {
+      const err = e as { name?: string; code?: string; message?: string };
+      // ignore abort errors
+      if (err?.name === "CanceledError" || err?.code === "ERR_CANCELED" || err?.message === "canceled") {
+        // request was cancelled, do nothing
+      } else {
+        console.error(e);
+        setError("Failed to load flights");
+      }
     } finally {
-      setLoading(false);
+      // only clear loading if current controller hasn't been replaced
+      if (abortRef.current === controller) {
+        setLoading(false);
+        abortRef.current = null;
+      }
     }
   }, [searchString, navigate, autoNavigate, preferContext, setFlights]);
 

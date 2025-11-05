@@ -38,7 +38,14 @@ public class AmadeusResponseMapper {
 
     public List<FlightOfferResponseDTO> mapFlightOffers(JsonObject amadeusResponse) {
         List<FlightOfferResponseDTO> flightOffers = new ArrayList<>();
-        JsonArray data = amadeusResponse.getAsJsonArray("data");
+        if (amadeusResponse == null) return flightOffers;
+
+        // Be defensive: some Amadeus responses (or error cases) may not include
+        // a top-level "data" array. Treat missing or non-array "data" as
+        // an empty result set instead of throwing NullPointerException.
+        JsonArray data = amadeusResponse.has("data") && amadeusResponse.get("data").isJsonArray()
+                ? amadeusResponse.getAsJsonArray("data")
+                : new JsonArray();
 
         for (JsonElement element : data) {
             JsonObject offer = element.getAsJsonObject();

@@ -1,9 +1,12 @@
-import axios from "axios";
+import { get } from "./client";
 
 // Use Vite env var when available; fallback to localhost
-const API_URL = import.meta.env.VITE_FLIGHT_API_URL
+const API_URL = import.meta.env.VITE_FLIGHT_API_URL ?? "http://localhost:8080/api/v1/flights";
 
-export const searchFlights = async (params) => {
-  const response = await axios.get(`${API_URL}/search`, { params });
-  return response.data;
+/**
+ * Search flights. Accepts optional options with AbortSignal: { signal }
+ */
+export const searchFlights = async (params, { signal } = {}) => {
+  const data = await get(`${API_URL}/search`, { params, signal });
+  return data;
 };
