@@ -1,0 +1,35 @@
+
+version: "3.8"
+
+services:
+  backend:
+    # Build from the backend Dockerfile (adjust if you use a different Dockerfile/name)
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080" # map host:container (change host port if needed)
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    networks:
+      - appnet
+
+  frontend:
+    # Build the frontend image (multi-stage Dockerfile created in frontend/Dockerfile)
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:80" # serve frontend on http://localhost:5173
+    depends_on:
+      - backend
+    environment:
+      # if your frontend reads an env var at build/runtime for API base, set it here
+      - VITE_API_BASE_URL=http://backend:8080
+    networks:
+      - appnet
+
+networks:
+  appnet:
+    driver: bridge
+
