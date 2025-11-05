@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useLocation, useParams } from "react-router-dom";
-import { useFlights } from "../context/FlightsContext";
+import { useFlights } from "../context/useFlights";
 import type { FlightOffer } from "../types/flight";
 
 export default function useOffer() {

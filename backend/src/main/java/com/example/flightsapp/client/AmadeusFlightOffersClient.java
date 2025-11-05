@@ -72,7 +72,9 @@ public class AmadeusFlightOffersClient implements FlightOffersClient {
             return response.body();
         } catch (IOException | InterruptedException e) {
             log.error("Error searching flights", e);
-            return "{}";
+            // Return a safe empty result shape so upstream parsing/mapping
+            // can treat this as "no offers" instead of throwing.
+            return "{\"data\": []}";
         }
     }
 }
