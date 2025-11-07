@@ -22,7 +22,18 @@ export function getPrimaryAirline(offer: FlightOffer) {
  * If no itinerary is provided, returns count 0 and empty details.
  */
 export function getStopsSummary(itin?: Itinerary): { count: number; details: StopInfo[] } {
-  const stops: StopInfo[] = itin?.stopTimes ?? [];
+  // Prefer backend-provided stopTimes when available (backwards-compatible).
+  if (itin?.stopTimes && itin.stopTimes.length > 0) {
+    return { count: itin.stopTimes.length, details: itin.stopTimes };
+  }
+
+  // Fallback: build stops from consecutive segments using segment.nextLayover
+  const segs = itin?.segments ?? [];
+  if (segs.length <= 1) return { count: 0, details: [] };
+  const stops: StopInfo[] = [];
+  for (let i = 0; i < segs.length - 1; i++) {
+    stops.push({ airport: segs[i].arrivalAirport, duration: segs[i].nextLayover ?? "" });
+  }
   return { count: stops.length, details: stops };
 }
 

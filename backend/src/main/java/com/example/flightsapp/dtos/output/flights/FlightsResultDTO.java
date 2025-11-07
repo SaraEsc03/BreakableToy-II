@@ -20,9 +20,9 @@ public class FlightsResultDTO {
     @AllArgsConstructor
     public static class FlightOffer {
         private String id;
-        private PriceTotals priceTotals;
-        private List<TravelerPricings> travelerPricings;
         private List<Itinerary> itineraries;
+        private List<TravelerPricings> travelerPricings;
+        private PriceTotals priceTotals;
     }
 
     @Getter
@@ -52,6 +52,8 @@ public class FlightsResultDTO {
         private String flightNumber;
         private String aircraftType;
         private String duration;
+        private String nextLayover; 
+        private String nextLayoverIso; 
     }
 
     @Getter
@@ -60,7 +62,7 @@ public class FlightsResultDTO {
     @AllArgsConstructor
     public static class TravelerPricings{
         private String travelerId;
-        private FareDetails fareDetailsBySegment;
+        private List<FareDetails> fareDetailsBySegment;
         private PriceTravelerDetails priceTravelerDetails;
     }
 

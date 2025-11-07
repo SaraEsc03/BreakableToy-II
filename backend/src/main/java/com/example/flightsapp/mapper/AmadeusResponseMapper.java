@@ -6,6 +6,7 @@ import com.example.flightsapp.dtos.output.flights.FareDetailsDTO;
 import com.example.flightsapp.dtos.output.flights.FlightOfferResponseDTO;
 import com.example.flightsapp.dtos.output.flights.ItineraryDTO;
 import com.example.flightsapp.dtos.output.flights.PriceTotalsResponseDTO;
+import com.example.flightsapp.dtos.output.flights.FeesResponseDTO;
 import com.example.flightsapp.dtos.output.flights.PriceTravelerDetailsDTO;
 import com.example.flightsapp.dtos.output.flights.SegmentDTO;
 import com.example.flightsapp.dtos.output.flights.TravelerPricingsResponseDTO;
@@ -37,7 +38,14 @@ public class AmadeusResponseMapper {
 
     public List<FlightOfferResponseDTO> mapFlightOffers(JsonObject amadeusResponse) {
         List<FlightOfferResponseDTO> flightOffers = new ArrayList<>();
-        JsonArray data = amadeusResponse.getAsJsonArray("data");
+        if (amadeusResponse == null) return flightOffers;
+
+        // Be defensive: some Amadeus responses (or error cases) may not include
+        // a top-level "data" array. Treat missing or non-array "data" as
+        // an empty result set instead of throwing NullPointerException.
+        JsonArray data = amadeusResponse.has("data") && amadeusResponse.get("data").isJsonArray()
+                ? amadeusResponse.getAsJsonArray("data")
+                : new JsonArray();
 
         for (JsonElement element : data) {
             JsonObject offer = element.getAsJsonObject();
@@ -94,6 +102,19 @@ public class AmadeusResponseMapper {
         priceDTO.setTotal(price.get("total").getAsString());
         priceDTO.setBase(price.get("base").getAsString());
         priceDTO.setGrandTotal(price.get("grandTotal").getAsString());
+        // Map fees if present (some Amadeus responses include a fees array)
+        if (price.has("fees") && price.get("fees").isJsonArray()) {
+            JsonArray feesArr = price.getAsJsonArray("fees");
+            FeesResponseDTO[] feesDto = new FeesResponseDTO[feesArr.size()];
+            for (int i = 0; i < feesArr.size(); i++) {
+                JsonObject fee = feesArr.get(i).getAsJsonObject();
+                FeesResponseDTO f = new FeesResponseDTO();
+                if (fee.has("amount") && !fee.get("amount").isJsonNull()) f.setAmount(fee.get("amount").getAsString());
+                if (fee.has("type") && !fee.get("type").isJsonNull()) f.setType(fee.get("type").getAsString());
+                feesDto[i] = f;
+            }
+            priceDTO.setFees(feesDto);
+        }
         return priceDTO;
     }
 
