@@ -10,3 +10,4 @@ export const searchFlights = async (params, { signal } = {}) => {
   const data = await get(`${API_URL}/search`, { params, signal });
   return data;
 };
+ 

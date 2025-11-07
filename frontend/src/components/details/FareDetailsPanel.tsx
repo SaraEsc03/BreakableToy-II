@@ -1,4 +1,3 @@
-import React from "react";
 import type { FareDetails } from "../../types/flight";
 
 type Props = { fare?: FareDetails };

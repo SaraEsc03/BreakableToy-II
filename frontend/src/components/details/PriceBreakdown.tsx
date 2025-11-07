@@ -1,4 +1,3 @@
-import React from "react";
 import { formatAmount } from "../../utils/formatters/number";
 import type { PriceTotals, TravelerPricing } from "../../types/flight";
 
