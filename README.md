@@ -28,3 +28,10 @@ cd backend
 The backend will start at http://localhost:8080/
 
 ### Frontend:
+```
+cd frontend
+npm install
+npm run dev
+```
+The frontend will start at http://localhost:5173/
+
