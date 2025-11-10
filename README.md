@@ -71,3 +71,8 @@ The backend will start at http://localhost:8080/
   - adults (integer, default 1): number of adult travelers
   - nonStop (boolean, optional): limit results to non-stop flights
   - currencyCode (string, optional): currency for prices
+
+### Response Examples
+  - Success (200): JSON object with flights results
+  - Bad request (400): invalid or missing parameters
+  - Internal Server Error (500): unexpected errors
